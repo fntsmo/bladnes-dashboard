@@ -186,13 +186,18 @@ export default function Dashboard() {
   const [addingMonth, setAddingMonth] = useState(false);
   const [emptyMonths, setEmptyMonths] = useState([]);
   const [expandedRow, setExpandedRow] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   /* ── Load orders from Supabase on mount ── */
   useEffect(() => {
     async function load() {
-      const { data, error } = await supabase.from("orders").select("*").order("month", { ascending: false });
-      if (error) { console.error("Supabase load error:", error); }
-      else { setOrders(data.map(rowToOrder)); }
+      const [ordersRes, meRes] = await Promise.all([
+        supabase.from("orders").select("*").order("month", { ascending: false }),
+        fetch("/api/me").then(r => r.json()),
+      ]);
+      if (ordersRes.error) { console.error("Supabase load error:", ordersRes.error); }
+      else { setOrders(ordersRes.data.map(rowToOrder)); }
+      setIsAdmin(meRes.role === "admin");
       setLoading(false);
     }
     load();
@@ -317,10 +322,10 @@ export default function Dashboard() {
             onFocus={e => e.target.style.borderColor="#C9A96E"} onBlur={e => e.target.style.borderColor="rgba(255,255,255,0.1)"} />
           {search && <button onClick={() => setSearch("")} style={{ position:"absolute", right:10, top:"50%", transform:"translateY(-50%)", background:"rgba(255,255,255,0.08)", border:"none", borderRadius:6, width:22, height:22, display:"flex", alignItems:"center", justifyContent:"center", color:"#A0A0A6", fontSize:12, cursor:"pointer" }}>✕</button>}
         </div>
-        <button onClick={() => setAddingMonth(true)} style={{ padding:"10px 20px", borderRadius:10, border:"1.5px solid rgba(201,169,110,0.3)", background:"rgba(201,169,110,0.08)", color:"#C9A96E", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"'IBM Plex Sans', sans-serif", display:"flex", alignItems:"center", gap:6, whiteSpace:"nowrap" }}
+        {isAdmin && <button onClick={() => setAddingMonth(true)} style={{ padding:"10px 20px", borderRadius:10, border:"1.5px solid rgba(201,169,110,0.3)", background:"rgba(201,169,110,0.08)", color:"#C9A96E", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"'IBM Plex Sans', sans-serif", display:"flex", alignItems:"center", gap:6, whiteSpace:"nowrap" }}
           onMouseEnter={e => e.currentTarget.style.background="rgba(201,169,110,0.15)"} onMouseLeave={e => e.currentTarget.style.background="rgba(201,169,110,0.08)"}>
           <span style={{ fontSize:16, lineHeight:1 }}>+</span> Новый месяц
-        </button>
+        </button>}
         {search && <div style={{ fontSize:11, color:"#7A7880", width:"100%" }}>Найдено: {grouped.reduce((s,[,it]) => s+it.length, 0)} заказов</div>}
       </div>
 
@@ -379,14 +384,17 @@ export default function Dashboard() {
                             <td style={{ padding:"14px 16px", whiteSpace:"nowrap", color:"#A0A0A6", fontSize:12 }}>{fmtDate(o.launchDate)}</td>
                             <td style={{ padding:"14px 16px", whiteSpace:"nowrap", color:"#A0A0A6", fontSize:12 }}>{fmtDate(o.dueDate)}</td>
                             <td style={{ padding:"14px 16px" }} onClick={e => e.stopPropagation()}>
-                              <StagePicker stage={o.stage} onChange={s => changeStage(o.uid, s)} />
+                              {isAdmin
+                                ? <StagePicker stage={o.stage} onChange={s => changeStage(o.uid, s)} />
+                                : (() => { const c = STAGE_COLORS[o.stage]||{bg:"rgba(255,255,255,0.05)",text:"#888",dot:"#666"}; return <span style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"4px 12px", borderRadius:20, background:c.bg, color:c.text, fontSize:11, fontWeight:600, letterSpacing:0.3, whiteSpace:"nowrap", border:`1px solid ${c.dot}33` }}><span style={{ width:6, height:6, borderRadius:"50%", background:c.dot, flexShrink:0 }} />{o.stage}</span>; })()
+                              }
                               {o.stage==="Отгружен" && o.shipDate && <div style={{ fontSize:10, color:"#8D6E63", marginTop:4, paddingLeft:4 }}>✓ {fmtDate(o.shipDate)}</div>}
                             </td>
                             <td style={{ padding:"14px 16px", minWidth:130 }}><StageBar stage={o.stage} /></td>
                             <td style={{ padding:"14px 16px" }} onClick={e => e.stopPropagation()}>
-                              <button onClick={() => setEditing(o)} style={{ width:30, height:30, borderRadius:6, border:"1px solid rgba(255,255,255,0.1)", background:"transparent", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, color:"#6B6870", transition:"all 0.2s" }}
+                              {isAdmin && <button onClick={() => setEditing(o)} style={{ width:30, height:30, borderRadius:6, border:"1px solid rgba(255,255,255,0.1)", background:"transparent", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, color:"#6B6870", transition:"all 0.2s" }}
                                 onMouseEnter={e => { e.currentTarget.style.borderColor="#C9A96E"; e.currentTarget.style.color="#C9A96E"; }}
-                                onMouseLeave={e => { e.currentTarget.style.borderColor="rgba(255,255,255,0.1)"; e.currentTarget.style.color="#6B6870"; }}>✎</button>
+                                onMouseLeave={e => { e.currentTarget.style.borderColor="rgba(255,255,255,0.1)"; e.currentTarget.style.color="#6B6870"; }}>✎</button>}
                             </td>
                           </tr>,
                           isExpanded && (
