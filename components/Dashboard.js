@@ -255,6 +255,14 @@ export default function Dashboard() {
     setEditing(null);
   }, []);
 
+  /* ── Delete order ── */
+  const handleDelete = useCallback(async (uid) => {
+    if (!confirm("Удалить заказ?")) return;
+    const { error } = await supabase.from("orders").delete().eq("uid", uid);
+    if (error) { console.error("Delete error:", error); return; }
+    setOrders(prev => prev.filter(o => o.uid !== uid));
+  }, []);
+
   /* ── Create new order ── */
   const handleCreate = useCallback(async (newOrder) => {
     const row = orderToRow(newOrder);
@@ -457,9 +465,14 @@ export default function Dashboard() {
                             </td>
                             <td style={{ padding:"14px 16px", minWidth:130 }}><StageBar stage={o.stage} /></td>
                             <td style={{ padding:"14px 16px" }} onClick={e => e.stopPropagation()}>
-                              {isAdmin && <button onClick={() => setEditing(o)} style={{ width:30, height:30, borderRadius:6, border:"1px solid rgba(255,255,255,0.1)", background:"transparent", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, color:"#6B6870", transition:"all 0.2s" }}
-                                onMouseEnter={e => { e.currentTarget.style.borderColor="#C9A96E"; e.currentTarget.style.color="#C9A96E"; }}
-                                onMouseLeave={e => { e.currentTarget.style.borderColor="rgba(255,255,255,0.1)"; e.currentTarget.style.color="#6B6870"; }}>✎</button>}
+                              {isAdmin && <div style={{ display:"flex", gap:6 }}>
+                                <button onClick={() => setEditing(o)} style={{ width:30, height:30, borderRadius:6, border:"1px solid rgba(255,255,255,0.1)", background:"transparent", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, color:"#6B6870", transition:"all 0.2s" }}
+                                  onMouseEnter={e => { e.currentTarget.style.borderColor="#C9A96E"; e.currentTarget.style.color="#C9A96E"; }}
+                                  onMouseLeave={e => { e.currentTarget.style.borderColor="rgba(255,255,255,0.1)"; e.currentTarget.style.color="#6B6870"; }}>✎</button>
+                                <button onClick={() => handleDelete(o.uid)} style={{ width:30, height:30, borderRadius:6, border:"1px solid rgba(255,255,255,0.1)", background:"transparent", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, color:"#6B6870", transition:"all 0.2s" }}
+                                  onMouseEnter={e => { e.currentTarget.style.borderColor="#EF5350"; e.currentTarget.style.color="#EF5350"; }}
+                                  onMouseLeave={e => { e.currentTarget.style.borderColor="rgba(255,255,255,0.1)"; e.currentTarget.style.color="#6B6870"; }}>✕</button>
+                              </div>}
                             </td>
                           </tr>,
                           isExpanded && (
