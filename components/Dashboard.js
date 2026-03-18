@@ -25,10 +25,10 @@ function stageIdx(s) { return STAGES.indexOf(s); }
 
 /* ── DB helpers ── */
 function rowToOrder(r) {
-  return { uid:r.uid, id:r.order_id, invoice:r.invoice, product:r.product, amount:r.amount, qty:r.qty, launchDate:r.launch_date, dueDate:r.due_date, stage:r.stage, shipDate:r.ship_date||"", payPercent:r.pay_percent, month:r.month, comment:r.comment||"" };
+  return { uid:r.uid, id:r.order_id, invoice:r.invoice, product:r.product, amount:r.amount, qty:r.qty, launchDate:r.launch_date, dueDate:r.due_date, stage:r.stage, shipDate:r.ship_date||"", payPercent:r.pay_percent, month:r.month, comment:r.comment||"", clientId:r.client_id||null };
 }
 function orderToRow(o) {
-  return { order_id:o.id, invoice:o.invoice, product:o.product, amount:o.amount, qty:o.qty, launch_date:o.launchDate, due_date:o.dueDate, stage:o.stage, ship_date:o.shipDate||null, pay_percent:o.payPercent, month:o.month, comment:o.comment||"" };
+  return { order_id:o.id, invoice:o.invoice, product:o.product, amount:o.amount, qty:o.qty, launch_date:o.launchDate, due_date:o.dueDate, stage:o.stage, ship_date:o.shipDate||null, pay_percent:o.payPercent, month:o.month, comment:o.comment||"", client_id:o.clientId||null };
 }
 
 /* ── Stage Progress Bar ── */
@@ -90,7 +90,7 @@ const labelSt = { display:"block", fontSize:10, fontWeight:700, letterSpacing:2,
 const btnBase = { padding:"12px 0", borderRadius:8, border:"none", fontSize:13, fontWeight:700, cursor:"pointer", transition:"all 0.2s", fontFamily:"'IBM Plex Sans', sans-serif", letterSpacing:0.5 };
 
 /* ── Add Order Modal ── */
-function AddOrderModal({ month, onSave, onClose }) {
+function AddOrderModal({ month, clientId, onSave, onClose }) {
   const today = new Date().toISOString().slice(0,10);
   const [form, setForm] = useState({ id:"", invoice:"", product:"", amount:0, qty:1, stage:STAGES[0], launchDate:today, dueDate:today, payPercent:0, comment:"" });
   const upd = (k,v) => setForm(p => ({ ...p, [k]:v }));
@@ -124,7 +124,7 @@ function AddOrderModal({ month, onSave, onClose }) {
         <textarea value={form.comment} onChange={e => upd("comment",e.target.value)} placeholder="Комментарий к заказу..." rows={3} style={{ ...inputDark, resize:"vertical", minHeight:60, lineHeight:1.5 }} />
         <div style={{ display:"flex", gap:10, marginTop:8 }}>
           <button onClick={onClose} style={{ ...btnBase, flex:1, background:"rgba(255,255,255,0.1)", color:"#A0A0A6" }}>Отмена</button>
-          <button disabled={!form.id||!form.product} onClick={() => onSave({ id:form.id, invoice:form.invoice, product:form.product, amount:form.amount, qty:form.qty, stage:form.stage, launchDate:form.launchDate, dueDate:form.dueDate, shipDate:"", payPercent:form.payPercent, month, comment:form.comment })} style={{ ...btnBase, flex:1, background:!form.id||!form.product?"#3E3C42":"#C9A96E", color:!form.id||!form.product?"#6B6870":"#0E0E10", cursor:!form.id||!form.product?"not-allowed":"pointer" }}>Создать</button>
+          <button disabled={!form.id||!form.product} onClick={() => onSave({ id:form.id, invoice:form.invoice, product:form.product, amount:form.amount, qty:form.qty, stage:form.stage, launchDate:form.launchDate, dueDate:form.dueDate, shipDate:"", payPercent:form.payPercent, month, comment:form.comment, clientId })} style={{ ...btnBase, flex:1, background:!form.id||!form.product?"#3E3C42":"#C9A96E", color:!form.id||!form.product?"#6B6870":"#0E0E10", cursor:!form.id||!form.product?"not-allowed":"pointer" }}>Создать</button>
         </div>
       </div>
     </div>
@@ -230,17 +230,24 @@ export default function Dashboard() {
   const [expandedRow, setExpandedRow] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [addingOrderMonth, setAddingOrderMonth] = useState(null);
+  const [clients, setClients] = useState([]);
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [clientSlug, setClientSlug] = useState(null);
+  const [clientName, setClientName] = useState(null);
 
   /* ── Load orders from Supabase on mount ── */
   useEffect(() => {
     async function load() {
-      const [ordersRes, meRes] = await Promise.all([
-        supabase.from("orders").select("*").order("month", { ascending: false }),
-        fetch("/api/me").then(r => r.json()),
-      ]);
+      const meRes = await fetch("/api/me").then(r => r.json());
+      setIsAdmin(meRes.role === "admin");
+      if (meRes.role === "admin") setClients(meRes.clients || []);
+      if (meRes.clientSlug) { setClientSlug(meRes.clientSlug); setClientName(meRes.clientName || meRes.clientSlug); }
+
+      let query = supabase.from("orders").select("*").order("month", { ascending: false });
+      if (meRes.clientSlug) query = query.eq("client_id", meRes.clientSlug);
+      const ordersRes = await query;
       if (ordersRes.error) { console.error("Supabase load error:", ordersRes.error); }
       else { setOrders(ordersRes.data.map(rowToOrder)); }
-      setIsAdmin(meRes.role === "admin");
       setLoading(false);
     }
     load();
@@ -283,17 +290,19 @@ export default function Dashboard() {
 
   const grouped = useMemo(() => {
     const q = search.toLowerCase().trim();
-    const filtered = q ? orders.filter(o =>
+    let base = orders;
+    if (isAdmin && selectedClient) base = orders.filter(o => o.clientId === selectedClient);
+    const filtered = q ? base.filter(o =>
       o.id.toLowerCase().includes(q) || o.invoice.toLowerCase().includes(q) ||
       o.product.toLowerCase().includes(q) || o.launchDate.includes(q) || o.dueDate.includes(q) ||
       fmtDate(o.launchDate).includes(q) || fmtDate(o.dueDate).includes(q) ||
       (o.shipDate && fmtDate(o.shipDate).includes(q))
-    ) : orders;
+    ) : base;
     const map = {};
     filtered.forEach(o => { if (!map[o.month]) map[o.month]=[]; map[o.month].push(o); });
     emptyMonths.forEach(m => { if (!map[m]) map[m]=[]; });
     return Object.entries(map).sort(([a],[b]) => b.localeCompare(a));
-  }, [orders, search, emptyMonths]);
+  }, [orders, search, emptyMonths, isAdmin, selectedClient]);
 
   const existingMonthSet = useMemo(() => {
     const set = new Set();
@@ -341,6 +350,30 @@ export default function Dashboard() {
           </button>
         </div>
       </div>
+
+      {/* Client name for viewer */}
+      {!isAdmin && clientName && (
+        <div style={{ background:"rgba(201,169,110,0.06)", borderBottom:"1px solid rgba(201,169,110,0.12)", padding:"10px 40px", display:"flex", alignItems:"center", gap:8 }}>
+          <span style={{ fontSize:10, color:"#7A7880", letterSpacing:2, textTransform:"uppercase", fontWeight:600 }}>Клиент:</span>
+          <span style={{ fontSize:13, color:"#C9A96E", fontWeight:700 }}>{clientName}</span>
+        </div>
+      )}
+
+      {/* Client tabs for admin */}
+      {isAdmin && clients.length > 0 && (
+        <div style={{ borderBottom:"1px solid rgba(255,255,255,0.06)", padding:"0 40px", display:"flex", alignItems:"center", gap:4, overflowX:"auto" }}>
+          {[{ slug: null, name: "Все клиенты" }, ...clients].map(c => {
+            const active = selectedClient === c.slug;
+            return (
+              <button key={c.slug ?? "__all__"} onClick={() => setSelectedClient(c.slug)} style={{ padding:"12px 18px", background:"transparent", border:"none", borderBottom:`2px solid ${active ? "#C9A96E" : "transparent"}`, color: active ? "#C9A96E" : "#7A7880", fontSize:13, fontWeight: active ? 700 : 500, cursor:"pointer", whiteSpace:"nowrap", fontFamily:"'IBM Plex Sans', sans-serif", transition:"all 0.2s" }}
+                onMouseEnter={e => { if (!active) e.currentTarget.style.color="#B0AEA8"; }}
+                onMouseLeave={e => { if (!active) e.currentTarget.style.color="#7A7880"; }}>
+                {c.name}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Chart */}
       <div style={{ padding:"24px 40px 0", maxWidth:1440, margin:"0 auto" }}>
@@ -410,7 +443,7 @@ export default function Dashboard() {
                   <span style={{ background:"rgba(201,169,110,0.1)", color:"#C9A96E", fontSize:10, fontWeight:700, padding:"2px 10px", borderRadius:10, border:"1px solid rgba(201,169,110,0.15)" }}>{items.length}</span>
                 </div>
                 <div style={{ display:"flex", alignItems:"center", gap:16 }}>
-                  {isAdmin && <button onClick={e => { e.stopPropagation(); setAddingOrderMonth(month); }} style={{ padding:"5px 14px", borderRadius:8, border:"1px solid rgba(201,169,110,0.3)", background:"rgba(201,169,110,0.07)", color:"#C9A96E", fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:"'IBM Plex Sans', sans-serif" }}
+                  {isAdmin && selectedClient && <button onClick={e => { e.stopPropagation(); setAddingOrderMonth(month); }} style={{ padding:"5px 14px", borderRadius:8, border:"1px solid rgba(201,169,110,0.3)", background:"rgba(201,169,110,0.07)", color:"#C9A96E", fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:"'IBM Plex Sans', sans-serif" }}
                     onMouseEnter={e => e.currentTarget.style.background="rgba(201,169,110,0.15)"} onMouseLeave={e => e.currentTarget.style.background="rgba(201,169,110,0.07)"}>
                     + Заказ
                   </button>}
@@ -500,7 +533,7 @@ export default function Dashboard() {
       </div>
 
       {editing && <EditModal order={editing} onSave={handleSave} onClose={() => setEditing(null)} />}
-      {addingOrderMonth && <AddOrderModal month={addingOrderMonth} onSave={handleCreate} onClose={() => setAddingOrderMonth(null)} />}
+      {addingOrderMonth && <AddOrderModal month={addingOrderMonth} clientId={isAdmin ? selectedClient : clientSlug} onSave={handleCreate} onClose={() => setAddingOrderMonth(null)} />}
       {addingMonth && <AddMonthModal existingMonths={existingMonthSet} onAdd={handleAddMonth} onClose={() => setAddingMonth(false)} />}
     </div>
   );
