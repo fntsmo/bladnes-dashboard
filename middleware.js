@@ -8,7 +8,7 @@ export function middleware(request) {
   }
 
   const auth = request.cookies.get("auth")?.value;
-  if (auth !== "admin" && auth !== "viewer") {
+  if (auth !== "admin" && !auth?.startsWith("client:")) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
