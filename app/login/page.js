@@ -40,10 +40,8 @@ export default function LoginPage() {
         borderRadius: 12, padding: "40px 48px", display: "flex", flexDirection: "column", gap: 20, minWidth: 320,
       }}>
         <div style={{ textAlign: "center", marginBottom: 8 }}>
-          <div style={{ display: "flex", justifyContent: "center", gap: 6, marginBottom: 8 }}>
-            <span style={{ color: "#E8E6E1", fontWeight: 700, fontSize: 18, letterSpacing: 1 }}>Bladnes</span>
-            <span style={{ color: "#7A7880", fontSize: 18 }}>×</span>
-            <span style={{ color: "#E8E6E1", fontWeight: 700, fontSize: 18, letterSpacing: 1 }}>Turbo</span>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
+            <span style={{ color: "#C9A96E", fontWeight: 700, fontSize: 22, letterSpacing: 2, fontFamily: "'IBM Plex Mono', monospace", textTransform: "uppercase" }}>Turbo</span>
           </div>
           <div style={{ color: "#7A7880", fontSize: 12, letterSpacing: 2, textTransform: "uppercase" }}>
             Production Dashboard
