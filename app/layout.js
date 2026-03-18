@@ -1,7 +1,7 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Bladnes × Turbo — Production Dashboard",
+  title: "Turbo — Production Dashboard",
   description: "Дашборд заказов производства одежды",
 };
 
