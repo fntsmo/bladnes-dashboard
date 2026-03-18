@@ -272,7 +272,14 @@ export default function Dashboard() {
           <span style={{ color:"#C9A96E", fontSize:20, fontWeight:300 }}>×</span>
           <span style={{ fontFamily:"'IBM Plex Mono', monospace", fontSize:26, fontWeight:700, color:"#C9A96E", letterSpacing:-1, textTransform:"uppercase" }}>Turbo</span>
         </div>
-        <div style={{ fontSize:10, color:"#7A7880", letterSpacing:2, textTransform:"uppercase", fontWeight:600 }}>Production Dashboard</div>
+        <div style={{ display:"flex", alignItems:"center", gap:16 }}>
+          <div style={{ fontSize:10, color:"#7A7880", letterSpacing:2, textTransform:"uppercase", fontWeight:600 }}>Production Dashboard</div>
+          <button onClick={async () => { await fetch("/api/logout", { method:"POST" }); window.location.href = "/login"; }} style={{ padding:"6px 14px", borderRadius:7, border:"1px solid rgba(255,255,255,0.1)", background:"transparent", color:"#7A7880", fontSize:11, fontFamily:"'IBM Plex Sans', sans-serif", cursor:"pointer", transition:"all 0.2s" }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor="rgba(255,255,255,0.25)"; e.currentTarget.style.color="#E8E6E1"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor="rgba(255,255,255,0.1)"; e.currentTarget.style.color="#7A7880"; }}>
+            Выйти
+          </button>
+        </div>
       </div>
 
       {/* Chart */}
