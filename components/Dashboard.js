@@ -89,6 +89,48 @@ const inputDark = { width:"100%", padding:"10px 14px", borderRadius:8, border:"1
 const labelSt = { display:"block", fontSize:10, fontWeight:700, letterSpacing:2, color:"#8A8890", textTransform:"uppercase", marginBottom:6 };
 const btnBase = { padding:"12px 0", borderRadius:8, border:"none", fontSize:13, fontWeight:700, cursor:"pointer", transition:"all 0.2s", fontFamily:"'IBM Plex Sans', sans-serif", letterSpacing:0.5 };
 
+/* ── Add Order Modal ── */
+function AddOrderModal({ month, onSave, onClose }) {
+  const today = new Date().toISOString().slice(0,10);
+  const [form, setForm] = useState({ id:"", invoice:"", product:"", amount:0, qty:1, stage:STAGES[0], launchDate:today, dueDate:today, payPercent:0, comment:"" });
+  const upd = (k,v) => setForm(p => ({ ...p, [k]:v }));
+  return (
+    <div style={{ position:"fixed", inset:0, zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", background:"rgba(0,0,0,0.7)", backdropFilter:"blur(8px)" }}>
+      <div style={{ background:"#1C1C22", borderRadius:16, padding:"32px 36px", width:480, maxWidth:"92vw", boxShadow:"0 32px 80px rgba(0,0,0,0.5)", border:"1px solid rgba(255,255,255,0.1)", fontFamily:"'IBM Plex Sans', sans-serif", maxHeight:"90vh", overflowY:"auto" }}>
+        <div style={{ fontSize:10, fontWeight:700, letterSpacing:3, color:"#C9A96E", textTransform:"uppercase", marginBottom:20 }}>Новый заказ — {monthLabel(month)}</div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0 16px" }}>
+          <div><label style={labelSt}>Номер заказа</label><input value={form.id} onChange={e => upd("id",e.target.value)} style={inputDark} /></div>
+          <div><label style={labelSt}>Номер счёта</label><input value={form.invoice} onChange={e => upd("invoice",e.target.value)} style={inputDark} /></div>
+        </div>
+        <label style={labelSt}>Изделие</label>
+        <input value={form.product} onChange={e => upd("product",e.target.value)} style={inputDark} />
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0 16px" }}>
+          <div><label style={labelSt}>Сумма (₽)</label><input type="number" value={form.amount} onChange={e => upd("amount",Number(e.target.value))} style={inputDark} /></div>
+          <div><label style={labelSt}>Кол-во изделий</label><input type="number" value={form.qty} onChange={e => upd("qty",Number(e.target.value))} style={inputDark} /></div>
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0 16px" }}>
+          <div><label style={labelSt}>Дата запуска</label><input type="date" value={form.launchDate} onChange={e => upd("launchDate",e.target.value)} style={{ ...inputDark, colorScheme:"dark" }} /></div>
+          <div><label style={labelSt}>Дата сдачи</label><input type="date" value={form.dueDate} onChange={e => upd("dueDate",e.target.value)} style={{ ...inputDark, colorScheme:"dark" }} /></div>
+        </div>
+        <label style={labelSt}>Оплата: {form.payPercent}%</label>
+        <input type="range" min={0} max={100} step={5} value={form.payPercent} onChange={e => upd("payPercent",Number(e.target.value))} style={{ width:"100%", accentColor:"#C9A96E", marginBottom:20 }} />
+        <label style={labelSt}>Стадия</label>
+        <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:16 }}>
+          {STAGES.map(s => { const active = form.stage===s; const c = STAGE_COLORS[s]; return (
+            <button key={s} onClick={() => upd("stage",s)} style={{ padding:"5px 13px", borderRadius:20, border:`1.5px solid ${active?c.dot:"rgba(255,255,255,0.08)"}`, background:active?c.bg:"transparent", color:active?c.text:"#8A8890", fontSize:11, fontWeight:600, cursor:"pointer" }}>{s}</button>
+          ); })}
+        </div>
+        <label style={labelSt}>Комментарий</label>
+        <textarea value={form.comment} onChange={e => upd("comment",e.target.value)} placeholder="Комментарий к заказу..." rows={3} style={{ ...inputDark, resize:"vertical", minHeight:60, lineHeight:1.5 }} />
+        <div style={{ display:"flex", gap:10, marginTop:8 }}>
+          <button onClick={onClose} style={{ ...btnBase, flex:1, background:"rgba(255,255,255,0.1)", color:"#A0A0A6" }}>Отмена</button>
+          <button disabled={!form.id||!form.product} onClick={() => onSave({ id:form.id, invoice:form.invoice, product:form.product, amount:form.amount, qty:form.qty, stage:form.stage, launchDate:form.launchDate, dueDate:form.dueDate, shipDate:"", payPercent:form.payPercent, month, comment:form.comment })} style={{ ...btnBase, flex:1, background:!form.id||!form.product?"#3E3C42":"#C9A96E", color:!form.id||!form.product?"#6B6870":"#0E0E10", cursor:!form.id||!form.product?"not-allowed":"pointer" }}>Создать</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Edit Modal ── */
 function EditModal({ order, onSave, onClose }) {
   const [form, setForm] = useState({ id:order.id, invoice:order.invoice, product:order.product, amount:order.amount, qty:order.qty, stage:order.stage, shipDate:order.shipDate||"", payPercent:order.payPercent, comment:order.comment||"" });
@@ -187,6 +229,7 @@ export default function Dashboard() {
   const [emptyMonths, setEmptyMonths] = useState([]);
   const [expandedRow, setExpandedRow] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [addingOrderMonth, setAddingOrderMonth] = useState(null);
 
   /* ── Load orders from Supabase on mount ── */
   useEffect(() => {
@@ -210,6 +253,15 @@ export default function Dashboard() {
     if (error) { console.error("Save error:", error); return; }
     setOrders(prev => prev.map(o => o.uid === updated.uid ? updated : o));
     setEditing(null);
+  }, []);
+
+  /* ── Create new order ── */
+  const handleCreate = useCallback(async (newOrder) => {
+    const row = orderToRow(newOrder);
+    const { data, error } = await supabase.from("orders").insert(row).select().single();
+    if (error) { console.error("Create error:", error); return; }
+    setOrders(prev => [rowToOrder(data), ...prev]);
+    setAddingOrderMonth(null);
   }, []);
 
   /* ── Change stage inline ── */
@@ -349,8 +401,14 @@ export default function Dashboard() {
                   <span style={{ fontFamily:"'IBM Plex Mono', monospace", fontSize:16, fontWeight:700, color:"#FFFFFF", letterSpacing:-0.3, textTransform:"uppercase" }}>{monthLabel(month)}</span>
                   <span style={{ background:"rgba(201,169,110,0.1)", color:"#C9A96E", fontSize:10, fontWeight:700, padding:"2px 10px", borderRadius:10, border:"1px solid rgba(201,169,110,0.15)" }}>{items.length}</span>
                 </div>
-                <div style={{ fontSize:10, color:"#8A8890", letterSpacing:1.5, textTransform:"uppercase", fontWeight:600 }}>
-                  Итого: <span style={{ color:"#C9A96E", fontSize:15, fontFamily:"'IBM Plex Mono', monospace", fontWeight:700 }}>{fmtMoney(monthTotal)}</span>
+                <div style={{ display:"flex", alignItems:"center", gap:16 }}>
+                  {isAdmin && <button onClick={e => { e.stopPropagation(); setAddingOrderMonth(month); }} style={{ padding:"5px 14px", borderRadius:8, border:"1px solid rgba(201,169,110,0.3)", background:"rgba(201,169,110,0.07)", color:"#C9A96E", fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:"'IBM Plex Sans', sans-serif" }}
+                    onMouseEnter={e => e.currentTarget.style.background="rgba(201,169,110,0.15)"} onMouseLeave={e => e.currentTarget.style.background="rgba(201,169,110,0.07)"}>
+                    + Заказ
+                  </button>}
+                  <div style={{ fontSize:10, color:"#8A8890", letterSpacing:1.5, textTransform:"uppercase", fontWeight:600 }}>
+                    Итого: <span style={{ color:"#C9A96E", fontSize:15, fontFamily:"'IBM Plex Mono', monospace", fontWeight:700 }}>{fmtMoney(monthTotal)}</span>
+                  </div>
                 </div>
               </div>
               {!isCollapsed && (
@@ -429,6 +487,7 @@ export default function Dashboard() {
       </div>
 
       {editing && <EditModal order={editing} onSave={handleSave} onClose={() => setEditing(null)} />}
+      {addingOrderMonth && <AddOrderModal month={addingOrderMonth} onSave={handleCreate} onClose={() => setAddingOrderMonth(null)} />}
       {addingMonth && <AddMonthModal existingMonths={existingMonthSet} onAdd={handleAddMonth} onClose={() => setAddingMonth(false)} />}
     </div>
   );
