@@ -244,7 +244,8 @@ export default function Dashboard() {
       if (meRes.clientSlug) { setClientSlug(meRes.clientSlug); setClientName(meRes.clientName || meRes.clientSlug); }
 
       let query = supabase.from("orders").select("*").order("month", { ascending: false });
-      if (meRes.clientSlug) query = query.eq("client_id", meRes.clientSlug);
+      if (meRes.clientSlug === "bladnes") query = query.or("client_id.eq.bladnes,client_id.is.null");
+      else if (meRes.clientSlug) query = query.eq("client_id", meRes.clientSlug);
       const ordersRes = await query;
       if (ordersRes.error) { console.error("Supabase load error:", ordersRes.error); }
       else { setOrders(ordersRes.data.map(rowToOrder)); }
@@ -337,8 +338,10 @@ export default function Dashboard() {
       {/* Header */}
       <div style={{ background:"#1E1E24", borderBottom:"1px solid rgba(255,255,255,0.06)", padding:"24px 40px", display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:16 }}>
         <div style={{ display:"flex", alignItems:"baseline", gap:10 }}>
-          <span style={{ fontFamily:"'IBM Plex Mono', monospace", fontSize:26, fontWeight:700, color:"#FFFFFF", letterSpacing:-1, textTransform:"uppercase" }}>Bladnes</span>
-          <span style={{ color:"#C9A96E", fontSize:20, fontWeight:300 }}>×</span>
+          {!isAdmin && clientName && <>
+            <span style={{ fontFamily:"'IBM Plex Mono', monospace", fontSize:26, fontWeight:700, color:"#FFFFFF", letterSpacing:-1, textTransform:"uppercase" }}>{clientName}</span>
+            <span style={{ color:"#C9A96E", fontSize:20, fontWeight:300 }}>×</span>
+          </>}
           <span style={{ fontFamily:"'IBM Plex Mono', monospace", fontSize:26, fontWeight:700, color:"#C9A96E", letterSpacing:-1, textTransform:"uppercase" }}>Turbo</span>
         </div>
         <div style={{ display:"flex", alignItems:"center", gap:16 }}>
@@ -351,18 +354,10 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Client name for viewer */}
-      {!isAdmin && clientName && (
-        <div style={{ background:"rgba(201,169,110,0.06)", borderBottom:"1px solid rgba(201,169,110,0.12)", padding:"10px 40px", display:"flex", alignItems:"center", gap:8 }}>
-          <span style={{ fontSize:10, color:"#7A7880", letterSpacing:2, textTransform:"uppercase", fontWeight:600 }}>Клиент:</span>
-          <span style={{ fontSize:13, color:"#C9A96E", fontWeight:700 }}>{clientName}</span>
-        </div>
-      )}
-
       {/* Client tabs for admin */}
       {isAdmin && clients.length > 0 && (
         <div style={{ borderBottom:"1px solid rgba(255,255,255,0.06)", padding:"0 40px", display:"flex", alignItems:"center", gap:4, overflowX:"auto" }}>
-          {[{ slug: null, name: "Все клиенты" }, ...clients].map(c => {
+          {[{ slug: null, name: "Bladnes" }, ...clients].map(c => {
             const active = selectedClient === c.slug;
             return (
               <button key={c.slug ?? "__all__"} onClick={() => setSelectedClient(c.slug)} style={{ padding:"12px 18px", background:"transparent", border:"none", borderBottom:`2px solid ${active ? "#C9A96E" : "transparent"}`, color: active ? "#C9A96E" : "#7A7880", fontSize:13, fontWeight: active ? 700 : 500, cursor:"pointer", whiteSpace:"nowrap", fontFamily:"'IBM Plex Sans', sans-serif", transition:"all 0.2s" }}
