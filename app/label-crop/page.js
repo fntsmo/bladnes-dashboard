@@ -3,7 +3,6 @@
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { PDFDocument } from "pdf-lib";
-import ThemeToggle from "../../components/ThemeToggle";
 
 const MM_TO_PT = 72 / 25.4;
 const TARGET_W = 60 * MM_TO_PT;
@@ -94,8 +93,6 @@ export default function LabelCropPage() {
       fontFamily: "'IBM Plex Sans', sans-serif",
       position: "relative",
     }}>
-      <ThemeToggle />
-
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: 2, background: "linear-gradient(90deg, transparent, var(--gold) 30%, var(--gold) 70%, transparent)", zIndex: 10, opacity: 0.6 }} />
 
       <div style={{ maxWidth: 600, margin: "0 auto", padding: "80px 40px 60px" }}>
