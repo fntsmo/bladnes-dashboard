@@ -344,8 +344,13 @@ export default function Dashboard() {
           </>}
           <span style={{ fontFamily:"'IBM Plex Mono', monospace", fontSize:26, fontWeight:700, color:"#C9A96E", letterSpacing:-1, textTransform:"uppercase" }}>Turbo</span>
         </div>
-        <div style={{ display:"flex", alignItems:"center", gap:16 }}>
-          <div style={{ fontSize:10, color:"#7A7880", letterSpacing:2, textTransform:"uppercase", fontWeight:600 }}>Production Dashboard</div>
+        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+          <div style={{ fontSize:10, color:"#7A7880", letterSpacing:2, textTransform:"uppercase", fontWeight:600, marginRight:8 }}>Production Dashboard</div>
+          {isAdmin && <button onClick={() => window.location.href = "/label-crop"} style={{ padding:"6px 14px", borderRadius:7, border:"1px solid rgba(255,255,255,0.1)", background:"transparent", color:"#C9A96E", fontSize:11, fontFamily:"'IBM Plex Sans', sans-serif", cursor:"pointer", transition:"all 0.2s" }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor="rgba(201,169,110,0.4)"; e.currentTarget.style.background="rgba(201,169,110,0.08)"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor="rgba(255,255,255,0.1)"; e.currentTarget.style.background="transparent"; }}>
+            Labels
+          </button>}
           <button onClick={async () => { await fetch("/api/logout", { method:"POST" }); window.location.href = "/login"; }} style={{ padding:"6px 14px", borderRadius:7, border:"1px solid rgba(255,255,255,0.1)", background:"transparent", color:"#7A7880", fontSize:11, fontFamily:"'IBM Plex Sans', sans-serif", cursor:"pointer", transition:"all 0.2s" }}
             onMouseEnter={e => { e.currentTarget.style.borderColor="rgba(255,255,255,0.25)"; e.currentTarget.style.color="#E8E6E1"; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor="rgba(255,255,255,0.1)"; e.currentTarget.style.color="#7A7880"; }}>

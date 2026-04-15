@@ -110,7 +110,7 @@ export default function LabelCropPage() {
               fontFamily: "'IBM Plex Sans', sans-serif", display: "flex", alignItems: "center", gap: 6,
             }}
           >
-            <span style={{ fontSize: 14 }}>&larr;</span> Портал
+            <span style={{ fontSize: 14 }}>&larr;</span> Dashboard
           </button>
 
           <div style={{
