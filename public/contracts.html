@@ -1,0 +1,2523 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ТурбоДоговоры — Генератор договоров</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1a1a1a;--paper:#ffffff;--cream:#f7f5f0;
+  --gold:#9a7b3f;--gold-lt:rgba(154,123,63,0.2);--gold-bg:rgba(154,123,63,0.05);
+  --rust:#8b4513;--slate:#6b7280;--line:#e5e2dc;
+  --accent:#9a7b3f;--green:#16a34a;--red:#dc2626;
+  --input-bg:#ffffff;--input-border:#d1cdc4;
+  /* document preview */
+  --doc-bg:#faf8f4;--doc-ink:#111110;--doc-cream:#f0ebe0;
+  --doc-gold:#b8943a;--doc-gold-lt:#e2cfa0;--doc-gold-bg:#fffbf0;
+  --doc-rust:#7a3f25;--doc-slate:#52637a;--doc-line:#ddd8ce;
+  --doc-accent:#17304f;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'IBM Plex Sans',sans-serif;background:#edeae4;color:var(--ink);min-height:100vh;}
+
+/* HEADER */
+header{background:#ffffff;color:var(--ink);padding:0 36px;height:60px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--line);position:sticky;top:0;z-index:200;
+  box-shadow:0 1px 3px rgba(0,0,0,.04);}
+.logo{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#1a1a1a;}
+.logo span{color:var(--gold);}
+.hdr-tag{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--slate);}
+
+/* TYPE BAR */
+.type-bar{background:#ffffff;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;padding:0 36px;
+  position:sticky;top:60px;z-index:150;}
+.type-btn{padding:16px 24px 14px;font-family:'IBM Plex Sans',sans-serif;
+  font-size:12px;font-weight:600;letter-spacing:.06em;color:var(--slate);text-transform:uppercase;
+  cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;transition:all .2s;}
+.type-btn.active{color:var(--gold);border-bottom-color:var(--gold);}
+.type-btn:hover:not(.active){color:var(--ink);}
+.type-btn .t-icon{margin-right:8px;font-size:15px;}
+
+/* LAYOUT */
+.app{display:grid;grid-template-columns:560px 1fr;min-height:calc(100vh - 107px);}
+
+/* SIDEBAR */
+.sidebar{background:#ffffff;border-right:1px solid var(--line);overflow-y:auto;
+  max-height:calc(100vh - 107px);position:sticky;top:107px;}
+.sb-top{padding:24px 28px 16px;border-bottom:1px solid var(--line);}
+.sb-title{font-family:'IBM Plex Sans',sans-serif;font-size:14px;color:var(--gold);margin-bottom:3px;font-weight:600;}
+.sb-desc{font-size:12px;color:var(--slate);}
+
+/* TABS */
+.tabs{display:flex;border-bottom:1px solid var(--line);padding:0 28px;}
+.tab{padding:12px 14px 10px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--slate);cursor:pointer;border-bottom:2px solid transparent;
+  transition:all .18s;white-space:nowrap;border:none;background:none;}
+.tab.active{color:var(--gold);border-bottom:2px solid var(--gold);}
+.tab:hover:not(.active){color:var(--ink);}
+.panel{display:none;padding:20px 28px;}
+.panel.active{display:block;}
+
+/* FORM */
+.fg{margin-bottom:16px;}
+.fg label{display:block;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--slate);margin-bottom:5px;}
+.fg label .hint{font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;color:#999;}
+.fg input,.fg select,.fg textarea{
+  width:100%;padding:10px 13px;border:1px solid var(--input-border);background:var(--input-bg);
+  font-family:'IBM Plex Sans',sans-serif;font-size:13px;color:var(--ink);
+  border-radius:8px;outline:none;transition:border-color .18s,box-shadow .18s;
+  height:42px;box-sizing:border-box;}
+.fg textarea{resize:vertical;min-height:70px;height:auto;font-size:12px;line-height:1.7;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(154,123,63,.12);}
+.fg input::placeholder,.fg textarea::placeholder{color:#b0aaa0;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.sec-lbl{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:var(--slate);
+  margin:20px 0 14px;padding-bottom:7px;border-bottom:1px solid var(--line);letter-spacing:.12em;
+  text-transform:uppercase;display:flex;align-items:center;gap:8px;}
+.sec-lbl::before{content:'';width:3px;height:12px;background:var(--gold);border-radius:2px;}
+
+/* ITEMS TABLE */
+.items-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px;margin-bottom:10px;
+  border:1px solid var(--input-border);border-radius:10px;overflow:hidden;}
+.items-table th{background:#f5f3ef;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  font-size:9px;padding:8px 10px;text-align:left;border-bottom:1px solid var(--input-border);color:var(--slate);}
+.items-table td{border-bottom:1px solid var(--line);padding:0;}
+.items-table tr:last-child td{border-bottom:none;}
+.items-table td input,.items-table td select{
+  border:none;background:transparent;padding:8px 10px;color:var(--ink);
+  font-size:12px;width:100%;outline:none;font-family:'IBM Plex Sans',sans-serif;box-sizing:border-box;}
+.items-table td input:focus,.items-table td select:focus{background:var(--gold-bg);}
+.add-item-btn{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--accent);background:none;border:1px dashed var(--gold-lt);
+  padding:7px 14px;border-radius:4px;cursor:pointer;width:100%;transition:all .18s;}
+.add-item-btn:hover{background:var(--gold-bg);border-color:var(--gold);}
+.del-row{background:none;border:none;color:#bbb;cursor:pointer;padding:0 6px;font-size:14px;}
+.del-row:hover{color:var(--red);}
+.totals-box{margin-top:14px;padding-top:14px;border-top:1px solid var(--line);}
+.totals-row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;}
+.totals-row.big{font-size:14px;font-weight:600;}
+.totals-val{font-family:'IBM Plex Mono',monospace;font-weight:500;}
+.totals-val.accent{color:var(--rust);}
+
+/* ACTIONS */
+.actions{padding:8px 28px 28px;}
+.gen-btn{width:100%;padding:13px;background:var(--gold);color:#fff;
+  border:none;font-family:'IBM Plex Sans',sans-serif;
+  font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  cursor:pointer;border-radius:8px;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:9px;}
+.gen-btn:hover{opacity:.88;transform:translateY(-1px);box-shadow:0 4px 20px rgba(154,123,63,.25);}
+.dl-btn{width:100%;padding:11px;background:transparent;color:var(--green);
+  border:1px solid rgba(22,163,74,0.3);font-family:'IBM Plex Sans',sans-serif;
+  font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  cursor:pointer;border-radius:8px;transition:all .2s;margin-top:9px;
+  display:flex;align-items:center;justify-content:center;gap:9px;}
+.dl-btn:hover{background:rgba(22,163,74,0.06);border-color:var(--green);}
+.spinner-wrap{display:none;align-items:center;justify-content:center;gap:8px;padding:14px;font-size:12px;color:var(--slate);}
+.spin{width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--gold);border-radius:50%;animation:sp .7s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg);}}
+
+/* PREVIEW */
+.preview{padding:36px;background:#edeae4;display:flex;flex-direction:column;align-items:center;overflow-y:auto;}
+.prev-lbl{font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--slate);margin-bottom:20px;align-self:flex-start;}
+
+/* A4 DOC */
+.doc{width:794px;min-height:1122px;background:white;box-shadow:0 4px 32px rgba(0,0,0,.1);
+  padding:56px 66px 72px;position:relative;font-family:'IBM Plex Sans',sans-serif;animation:su .28s ease;}
+@keyframes su{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+.doc::before{content:'';position:absolute;top:0;right:0;width:0;height:0;
+  border-left:60px solid transparent;border-top:60px solid var(--gold);opacity:.18;}
+
+/* DOC STYLES */
+.dh{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;}
+.dh-left .co-name{font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:700;color:#111;margin-bottom:3px;}
+.dh-left .co-det{font-size:9.5px;color:#333;line-height:1.7;}
+.dh-right{text-align:right;}
+.dh-right .dt{font-family:'IBM Plex Sans',sans-serif;font-size:15px;font-weight:700;color:#111;text-transform:uppercase;letter-spacing:0.5px;}
+.dh-right .dn{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#111;font-weight:600;}
+.dh-right .dd{font-size:10px;color:#333;margin-top:3px;}
+.gr{height:3px;background:linear-gradient(90deg,var(--gold),var(--gold-lt));margin:0 -66px 22px;width:calc(100% + 132px);}
+.pb{background:#f9f7f2;border-left:4px solid var(--gold);padding:14px 18px;margin-bottom:20px;font-size:11.5px;line-height:1.9;border-radius:0 4px 4px 0;}
+.pb strong{color:#111;}
+.ds{margin-bottom:16px;}
+.ds-title{font-family:'IBM Plex Sans',sans-serif;font-size:11px;font-weight:600;color:#111;
+  text-transform:uppercase;letter-spacing:.1em;margin-bottom:7px;display:flex;align-items:center;gap:8px;}
+.ds-title .num{font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:500;
+  background:#111;color:white;width:19px;height:19px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ds-body{font-size:11.5px;line-height:1.85;color:#2a2a2a;padding-left:27px;}
+.ds-body p{margin-bottom:5px;}
+.ds-body ul{padding-left:18px;margin:4px 0 6px;}
+.ds-body ul li{margin-bottom:3px;}
+.val{font-family:'IBM Plex Mono',monospace;font-size:11px;background:var(--gold-bg);
+  border:1px solid var(--gold-lt);padding:1px 5px;border-radius:3px;color:var(--rust);font-weight:500;}
+.doc-table{width:100%;border-collapse:collapse;font-size:10.5px;margin:8px 0 10px;}
+.doc-table th{background:#f0ece4;font-weight:600;text-transform:uppercase;letter-spacing:.05em;
+  font-size:9px;padding:5px 7px;border:1px solid #ddd;color:var(--slate);text-align:left;}
+.doc-table td{border:1px solid #ddd;padding:5px 7px;font-size:11px;}
+.doc-table tr:nth-child(even) td{background:#faf8f4;}
+.doc-table .total-row td{font-weight:600;background:#f5f1e8;}
+.sigs{margin-top:36px;display:grid;grid-template-columns:1fr 1fr;gap:30px;padding-top:18px;border-top:1px solid var(--line);}
+.sig .s-lbl{font-size:8.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#111;margin-bottom:6px;}
+.sig .s-name{font-size:11.5px;font-weight:600;color:#111;margin-bottom:4px;}
+.sig .s-det{font-size:9.5px;color:#333;line-height:1.7;}
+.sig .s-line{border-bottom:1px solid var(--ink);margin:18px 0 5px;height:24px;}
+.sig .s-cap{font-size:9px;color:var(--slate);}
+.stamp{position:absolute;bottom:72px;right:62px;width:76px;height:76px;
+  border:2.5px solid rgba(184,148,58,.25);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;transform:rotate(-12deg);opacity:.4;}
+.stamp-txt{font-size:7px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);text-align:center;line-height:1.5;}
+.empty{width:100%;max-width:794px;min-height:400px;background:transparent;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;opacity:.5;}
+.empty .ei{font-size:52px;opacity:.25;}
+.empty .et{font-family:'IBM Plex Sans',sans-serif;font-size:17px;color:var(--slate);}
+.empty .es{font-size:12px;color:#bbb;}
+
+/* SETTINGS */
+.settings-btn{display:flex;align-items:center;gap:7px;padding:8px 16px;
+  background:#f5f3ef;border:1px solid var(--line);color:var(--slate);
+  font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500;letter-spacing:.05em;
+  border-radius:5px;cursor:pointer;transition:all .18s;}
+.settings-btn:hover{background:#edeae4;color:var(--ink);border-color:var(--gold);}
+.settings-btn .sb-dot{width:7px;height:7px;border-radius:50%;background:#ccc;transition:background .18s;flex-shrink:0;}
+.settings-btn.has-data .sb-dot{background:var(--gold);}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:1000;
+  display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
+.modal-overlay.open{display:flex;}
+.modal{background:#ffffff;width:580px;max-height:88vh;border-radius:12px;overflow:hidden;
+  box-shadow:0 24px 80px rgba(0,0,0,.15);display:flex;flex-direction:column;animation:mIn .22s ease;}
+@keyframes mIn{from{opacity:0;transform:translateY(-16px);}to{opacity:1;transform:translateY(0);}}
+.modal-header{padding:22px 28px 18px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;background:#f7f5f0;}
+.modal-header-left .m-title{font-family:'IBM Plex Sans',sans-serif;font-size:17px;font-weight:700;color:var(--ink);margin-bottom:2px;}
+.modal-header-left .m-desc{font-size:12px;color:var(--slate);}
+.modal-close{background:none;border:none;color:#999;cursor:pointer;font-size:20px;line-height:1;padding:4px;transition:color .15s;}
+.modal-close:hover{color:var(--ink);}
+.modal-body{padding:24px 28px;overflow-y:auto;}
+.modal-footer{padding:16px 28px;border-top:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;gap:12px;background:#f7f5f0;}
+.save-btn{padding:10px 24px;background:var(--gold);color:#fff;border:none;
+  font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:600;letter-spacing:.08em;
+  text-transform:uppercase;border-radius:5px;cursor:pointer;transition:all .18s;}
+.save-btn:hover{opacity:.85;}
+.clear-btn{padding:10px 18px;background:transparent;color:var(--red);
+  border:1px solid rgba(220,38,38,.25);font-family:'IBM Plex Sans',sans-serif;
+  font-size:12px;font-weight:500;border-radius:5px;cursor:pointer;transition:all .18s;}
+.clear-btn:hover{background:rgba(220,38,38,.04);border-color:var(--red);}
+.save-toast{position:fixed;bottom:28px;right:28px;background:var(--ink);color:#fff;
+  padding:12px 20px;border-radius:8px;font-size:13px;font-weight:500;letter-spacing:.04em;
+  box-shadow:0 4px 20px rgba(0,0,0,.15);transform:translateY(20px);opacity:0;
+  transition:all .25s ease;pointer-events:none;z-index:2000;display:flex;align-items:center;gap:9px;}
+.save-toast.show{transform:translateY(0);opacity:1;}
+
+/* MODE TOGGLE */
+.toggle-group{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:4px;}
+.tgl-btn{
+  padding:9px 6px;text-align:center;
+  background:var(--paper);border:1.5px solid var(--line);
+  font-family:'IBM Plex Sans',sans-serif;font-size:11px;font-weight:500;
+  color:var(--slate);border-radius:6px;cursor:pointer;
+  transition:all .18s;line-height:1.35;
+}
+.tgl-btn:hover:not(.active){background:#f5f2ec;border-color:var(--gold-lt);color:var(--ink);}
+.tgl-btn.active{
+  background:var(--accent);border-color:var(--accent);
+  color:white;font-weight:600;
+  box-shadow:0 2px 8px rgba(154,123,63,.2);
+}
+.tgl-btn .tgl-icon{display:block;font-size:16px;margin-bottom:3px;}
+.tgl-btn .tgl-label{display:block;font-size:10px;letter-spacing:.02em;}
+.mode-hint{
+  margin-top:8px;font-size:11px;color:var(--slate);
+  padding:7px 11px;background:#f5f2ec;border-radius:4px;
+  border-left:3px solid var(--gold);line-height:1.55;
+}
+
+/* SPEC SECTION in doc */
+.spec-title{font-size:11px;font-weight:600;color:#111;margin:12px 0 6px;letter-spacing:.04em;}
+.appendix-badge{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:9px;
+  background:var(--accent);color:white;padding:2px 7px;border-radius:10px;margin-bottom:14px;letter-spacing:.06em;}
+
+/* VIEW PAGES */
+.view-page{min-height:calc(100vh - 107px);background:var(--cream);padding:32px 40px;}
+.vp-container{max-width:800px;margin:0 auto;}
+.vp-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px;flex-wrap:wrap;}
+.vp-title{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:700;color:var(--ink);text-transform:uppercase;letter-spacing:.05em;}
+.vp-desc{font-size:12px;color:var(--slate);margin-top:4px;}
+.vp-search{margin-bottom:20px;}
+
+/* CLIENT DB & REGISTRY */
+.cdb-card{padding:12px 14px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;
+  cursor:pointer;transition:all .18s;background:var(--paper);}
+.cdb-card:hover{border-color:var(--gold);background:var(--gold-bg);}
+.cdb-name{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:2px;}
+.cdb-inn{font-size:11px;color:var(--slate);font-family:'IBM Plex Mono',monospace;}
+.cdb-actions{display:flex;gap:6px;margin-top:6px;}
+.cdb-btn{padding:4px 10px;font-size:10px;font-weight:600;border-radius:5px;cursor:pointer;
+  font-family:'IBM Plex Sans',sans-serif;border:1px solid var(--line);background:transparent;
+  color:var(--slate);transition:all .15s;}
+.cdb-btn:hover{border-color:var(--gold);color:var(--gold);}
+.cdb-btn.del:hover{border-color:var(--red);color:var(--red);}
+.cdb-empty{font-size:12px;color:var(--slate);padding:16px 0;text-align:center;}
+.reg-card{padding:10px 14px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;background:var(--paper);}
+.reg-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+.reg-num{font-size:13px;font-weight:700;color:var(--ink);font-family:'IBM Plex Mono',monospace;}
+.reg-date{font-size:11px;color:var(--slate);}
+.reg-parties{font-size:11px;color:var(--slate);line-height:1.5;}
+.reg-parties strong{color:var(--ink);font-weight:600;}
+.reg-total{font-size:12px;font-weight:600;color:var(--gold);font-family:'IBM Plex Mono',monospace;margin-top:4px;}
+
+/* CONTRACT VIEWER MODAL */
+.viewer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1100;
+  display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px;backdrop-filter:blur(3px);}
+.viewer-overlay.open{display:flex;}
+.viewer-wrap{background:#edeae4;border-radius:12px;width:880px;max-width:100%;padding:24px;position:relative;
+  box-shadow:0 24px 80px rgba(0,0,0,.2);animation:mIn .22s ease;}
+.viewer-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.viewer-title{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700;color:var(--ink);}
+.viewer-close{padding:8px 16px;border:1px solid var(--line);background:var(--paper);border-radius:6px;
+  font-size:12px;font-weight:600;cursor:pointer;color:var(--slate);transition:all .15s;}
+.viewer-close:hover{border-color:var(--ink);color:var(--ink);}
+.viewer-doc{background:white;border-radius:4px;padding:40px 40px 50px;box-shadow:0 2px 16px rgba(0,0,0,.08);
+  font-family:'IBM Plex Sans',sans-serif;font-size:11.5px;line-height:1.85;color:#2a2a2a;overflow:hidden;}
+.viewer-doc .gr{margin:0 -40px 22px;width:calc(100% + 80px);}
+.vtab{padding:10px 20px;font-size:12px;font-weight:600;color:var(--slate);background:none;border:none;
+  border-bottom:2px solid transparent;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;transition:all .18s;}
+.vtab.active{color:var(--gold);border-bottom-color:var(--gold);}
+.vtab:hover:not(.active){color:var(--ink);}
+.vtab-panel{display:none;padding:16px 0;}
+.vtab-panel.active{display:block;}
+.spec-card{border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:10px;background:var(--paper);}
+.spec-card-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.spec-card-num{font-size:14px;font-weight:700;color:var(--ink);font-family:'IBM Plex Mono',monospace;}
+.spec-card-date{font-size:11px;color:var(--slate);}
+.spec-card-info{font-size:12px;color:var(--slate);line-height:1.5;}
+.ns-row{display:grid;grid-template-columns:2fr 1fr 60px 80px 80px 30px;gap:6px;margin-bottom:6px;align-items:center;}
+.ns-row input,.ns-row select{height:34px;padding:4px 8px;border:1px solid var(--input-border);border-radius:6px;font-size:12px;
+  font-family:'IBM Plex Sans',sans-serif;color:var(--ink);background:var(--input-bg);outline:none;box-sizing:border-box;}
+.page-break{border:none;border-top:2px dashed var(--gold-lt);margin:32px 0;opacity:.6;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Turbo<span>Docs</span></div>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <a href="/" style="padding:6px 14px;background:transparent;border:1px solid var(--line);border-radius:7px;color:var(--slate);font-size:11px;font-family:'IBM Plex Sans',sans-serif;text-decoration:none;transition:all 0.2s;letter-spacing:0.3px;" onmouseover="this.style.color='#1a1a1a';this.style.borderColor='var(--gold)'" onmouseout="this.style.color='var(--slate)';this.style.borderColor='var(--line)'">← Портал</a>
+    <span class="hdr-tag">Генератор договоров</span>
+    <button class="settings-btn" id="settings-btn" onclick="openSettings()">
+      <div class="sb-dot"></div>
+      Мои реквизиты
+    </button>
+  </div>
+</header>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeSettingsOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="m-title">Реквизиты вашей компании</div>
+        <div class="m-desc">Сохраните один раз — будут подставляться автоматически</div>
+      </div>
+      <button class="modal-close" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="sec-lbl" style="margin-top:0">Профиль исполнителя</div>
+      <div style="display:flex;gap:8px;margin-bottom:16px;align-items:center;">
+        <select id="my-profile-select" onchange="switchProfile()" style="flex:1;padding:10px 13px;border:1px solid var(--input-border);background:var(--input-bg);font-family:'IBM Plex Sans',sans-serif;font-size:13px;color:var(--ink);border-radius:8px;outline:none;"></select>
+        <button onclick="addProfile()" style="padding:8px 14px;border:1px solid var(--gold-lt);background:var(--gold-bg);color:var(--gold);font-size:11px;font-weight:600;border-radius:8px;cursor:pointer;white-space:nowrap;">+ Новый</button>
+        <button onclick="deleteProfile()" style="padding:8px 12px;border:1px solid rgba(220,38,38,0.25);background:rgba(220,38,38,0.04);color:var(--red);font-size:11px;font-weight:600;border-radius:8px;cursor:pointer;white-space:nowrap;">✕</button>
+      </div>
+      <div class="sec-lbl">Основные данные</div>
+      <div class="fg"><label>Наименование (полное)</label>
+        <input id="my-name" placeholder="Индивидуальный предприниматель Тиханов Алексей Владимирович">
+      </div>
+      <div class="fg"><label>ИНН</label><input id="my-inn" placeholder="434543395648"></div>
+      <div class="fg"><label>ОГРНИП</label><input id="my-ogrn" placeholder="323435000000461"></div>
+      <div class="fg"><label>Юридический адрес</label>
+        <input id="my-addr" placeholder="610047, Кировская обл., г. Киров, ул. Дзержинского, д. 60, кв. 159">
+      </div>
+      <div class="fg"><label>Почтовый адрес <span class="hint">(если отличается)</span></label>
+        <input id="my-postal" placeholder="совпадает с юридическим">
+      </div>
+      <div class="sec-lbl">Банковские реквизиты</div>
+      <div class="fg"><label>Банк</label><input id="my-bank" placeholder="ПАО Филиал «Центральный» Банк ВТБ"></div>
+      <div class="fg"><label>БИК</label><input id="my-bik" placeholder="044525411"></div>
+      <div class="fg"><label>Расчётный счёт (р/с)</label><input id="my-rs" placeholder="40802810516454220554"></div>
+      <div class="fg"><label>Корреспондентский счёт (к/с)</label><input id="my-ks" placeholder="30101810145250000411"></div>
+      <div class="sec-lbl">Контакты и ЭДО</div>
+      <div class="row2">
+        <div class="fg"><label>Email</label><input id="my-email" placeholder="ip-tikhanov@mail.ru"></div>
+        <div class="fg"><label>Телефон</label><input id="my-phone" placeholder="+7 912 736 17 27"></div>
+      </div>
+      <div class="fg"><label>Оператор ЭДО</label><input id="my-edo-op" placeholder="1С Калуга-Астрал"></div>
+      <div class="fg"><label>ID ЭДО</label><input id="my-edo-id" placeholder="2AED444A198-C4A6-469B-BE39-9789CEDCDD45"></div>
+      <div class="sec-lbl">Подписант</div>
+      <div class="fg"><label>ФИО для подписи</label><input id="my-signer" placeholder="Тиханов А. В."></div>
+    </div>
+    <div class="modal-footer">
+      <button class="clear-btn" onclick="clearMyData()">Очистить данные</button>
+      <button class="save-btn" onclick="saveMyData()">💾 Сохранить реквизиты</button>
+    </div>
+  </div>
+</div>
+<div class="save-toast" id="save-toast"></div>
+
+<!-- TOP NAV -->
+<div class="type-bar">
+  <button class="type-btn active" id="nav-contract" onclick="switchView('contract')">
+    <span class="t-icon">📄</span>Договор
+  </button>
+  <button class="type-btn" id="nav-clients" onclick="switchView('clients')">
+    <span class="t-icon">👥</span>Контрагенты
+  </button>
+  <button class="type-btn" id="nav-registry" onclick="switchView('registry')">
+    <span class="t-icon">📋</span>Реестр договоров
+  </button>
+</div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="sb-top">
+      <div class="sb-title">Договор поставки и оказания услуг</div>
+      <div class="sb-desc">Заполните поля и сформируйте документ</div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" id="tab-contractor" onclick="switchTab('contractor',this)">Исполнитель</button>
+      <button class="tab" id="tab-client" onclick="switchTab('client',this)">Заказчик</button>
+      <button class="tab" id="tab-terms" onclick="switchTab('terms',this)">Условия</button>
+    </div>
+
+    <!-- CONTRACTOR -->
+    <div class="panel active" id="panel-contractor">
+      <div class="sec-lbl">Исполнитель / Поставщик</div>
+      <div class="fg"><label>Наименование (полное)</label>
+        <input id="c-name" placeholder="Индивидуальный предприниматель Тиханов Алексей Владимирович" oninput="liveUpdate()">
+      </div>
+      <div class="fg"><label>ИНН</label>
+        <input id="c-inn" placeholder="434543395648" oninput="liveUpdate()">
+      </div>
+      <div class="fg"><label>ОГРНИП</label>
+        <input id="c-ogrn" placeholder="323435000000461" oninput="liveUpdate()">
+      </div>
+      <div class="fg"><label>Юридический адрес</label>
+        <input id="c-addr" placeholder="610047, Кировская обл., г. Киров, ул. Дзержинского, д. 60, кв. 159" oninput="liveUpdate()">
+      </div>
+      <div class="fg"><label>Почтовый адрес <span class="hint">(если отличается)</span></label>
+        <input id="c-postal" placeholder="совпадает с юридическим" oninput="liveUpdate()">
+      </div>
+      <div class="sec-lbl">Банковские реквизиты</div>
+      <div class="fg"><label>Банк</label>
+        <input id="c-bank" placeholder="ПАО Филиал «Центральный» Банк ВТБ" oninput="liveUpdate()">
+      </div>
+      <div class="fg"><label>БИК</label>
+        <input id="c-bik" placeholder="044525411" oninput="liveUpdate()">
+      </div>
+      <div class="fg"><label>Расчётный счёт (р/с)</label>
+        <input id="c-rs" placeholder="40802810516454220554" oninput="liveUpdate()">
+      </div>
+      <div class="fg"><label>Корреспондентский счёт (к/с)</label>
+        <input id="c-ks" placeholder="30101810145250000411" oninput="liveUpdate()">
+      </div>
+      <div class="sec-lbl">Контакты и ЭДО</div>
+      <div class="row2">
+        <div class="fg"><label>Email</label><input id="c-email" placeholder="ip-tikhanov@mail.ru" oninput="liveUpdate()"></div>
+        <div class="fg"><label>Телефон</label><input id="c-phone" placeholder="+7 912 736 17 27" oninput="liveUpdate()"></div>
+      </div>
+      <div class="fg"><label>Оператор ЭДО</label>
+        <input id="c-edo-op" placeholder="1С Калуга-Астрал" oninput="liveUpdate()">
+      </div>
+      <div class="fg"><label>ID ЭДО</label>
+        <input id="c-edo-id" placeholder="2AED444A198-C4A6-469B-BE39-9789CEDCDD45" oninput="liveUpdate()">
+      </div>
+      <div class="sec-lbl">Подписант</div>
+      <div class="fg"><label>ФИО для подписи</label>
+        <input id="c-signer" placeholder="Тиханов А. В." oninput="liveUpdate()">
+      </div>
+      <div class="fg"><label>В род. падеже <span class="hint">(для преамбулы)</span></label>
+        <input id="c-signer-gen" placeholder="Тиханова А. В." oninput="liveUpdate()">
+      </div>
+    </div>
+
+    <!-- CLIENT -->
+    <div class="panel" id="panel-client">
+      <div class="sec-lbl">Заказчик / Покупатель</div>
+      <div class="fg">
+        <label>ИНН <span class="hint">(введите и нажмите «Найти» для автозаполнения)</span></label>
+        <div style="display:flex;gap:8px">
+          <input id="cl-inn" placeholder="7700000001" oninput="liveUpdate();updateClientFormType()" style="flex:1">
+          <button onclick="lookupINN()" id="inn-lookup-btn" style="padding:8px 16px;border:1px solid var(--gold-lt);background:var(--gold-bg);color:var(--gold);font-size:12px;font-weight:600;border-radius:8px;cursor:pointer;white-space:nowrap;font-family:'IBM Plex Sans',sans-serif;transition:all .18s">Найти</button>
+        </div>
+        <div id="inn-lookup-status" style="font-size:11px;margin-top:5px;min-height:16px"></div>
+      </div>
+      <div class="fg"><label>Наименование (полное)</label>
+        <div style="display:flex;gap:8px">
+          <input id="cl-name" placeholder='ООО "Компания" или ИП Иванов И.И.' oninput="liveUpdate()" style="flex:1">
+          <button onclick="openClientPicker()" id="cl-pick-btn" style="padding:8px 14px;border:1px solid var(--gold-lt);background:var(--gold-bg);color:var(--gold);font-size:12px;font-weight:600;border-radius:8px;cursor:pointer;white-space:nowrap;font-family:'IBM Plex Sans',sans-serif;transition:all .18s" title="Выбрать из сохранённых">📋 Список</button>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="fg" id="cl-kpp-wrap"><label>КПП</label>
+          <input id="cl-kpp" placeholder="770001001" oninput="liveUpdate()">
+        </div>
+        <div class="fg"><label id="cl-ogrn-label">ОГРН / ОГРНИП</label>
+          <input id="cl-ogrn" placeholder="1027700000001" oninput="liveUpdate()">
+        </div>
+      </div>
+      <div class="fg"><label>Юридический адрес</label>
+        <input id="cl-addr" placeholder="г. Москва, ул. Примерная, д. 1" oninput="liveUpdate()">
+      </div>
+      <div class="fg"><label>Почтовый / фактический адрес <span class="hint">(для писем и посылок)</span></label>
+        <input id="cl-postal" placeholder="совпадает с юридическим" oninput="liveUpdate()">
+      </div>
+      <div class="sec-lbl">Банковские реквизиты</div>
+      <div class="fg"><label>Банк</label><input id="cl-bank" placeholder='ПАО "Сбербанк"' oninput="liveUpdate()"></div>
+      <div class="fg"><label>БИК</label><input id="cl-bik" placeholder="044525225" oninput="liveUpdate()"></div>
+      <div class="fg"><label>Расчётный счёт (р/с)</label><input id="cl-rs" placeholder="40702810000000000000" oninput="liveUpdate()"></div>
+      <div class="fg"><label>Корреспондентский счёт (к/с)</label><input id="cl-ks" placeholder="30101810400000000225" oninput="liveUpdate()"></div>
+      <div class="sec-lbl">Контакты</div>
+      <div class="row2">
+        <div class="fg"><label>Email</label><input id="cl-email" placeholder="client@company.ru" oninput="liveUpdate()"></div>
+        <div class="fg"><label>Телефон</label><input id="cl-phone" placeholder="+7 495 000 00 00" oninput="liveUpdate()"></div>
+      </div>
+      <div class="fg"><label>Оператор ЭДО <span class="hint">(если есть)</span></label>
+        <input id="cl-edo-op" placeholder="Диадок / Калуга-Астрал" oninput="liveUpdate()">
+      </div>
+      <div class="fg"><label>ID ЭДО</label>
+        <input id="cl-edo-id" placeholder="" oninput="liveUpdate()">
+      </div>
+      <div class="sec-lbl">Подписант</div>
+      <div class="fg"><label id="cl-signer-label">Должность и ФИО</label>
+        <input id="cl-signer" placeholder="Генеральный директор Петров П.П." oninput="liveUpdate()">
+      </div>
+      <div class="fg" id="cl-signer-gen-wrap"><label>В род. падеже <span class="hint">(для преамбулы: «в лице ...»)</span></label>
+        <input id="cl-signer-gen" placeholder="Директора Петровой Анны Петровны" oninput="liveUpdate()">
+      </div>
+      <div class="fg" id="cl-basis-wrap"><label>Основание полномочий</label>
+        <input id="cl-basis" placeholder="Устава" oninput="liveUpdate()">
+      </div>
+    </div>
+
+    <!-- TERMS -->
+    <div class="panel" id="panel-terms">
+      <div class="row2">
+        <div class="fg"><label>Номер договора</label><input id="t-num" placeholder="001/2025" oninput="liveUpdate()"></div>
+        <div class="fg"><label>Дата</label><input type="date" id="t-date" oninput="liveUpdate()"></div>
+      </div>
+      <div class="fg"><label>Действует до</label><input type="date" id="t-end-date" value="2026-12-31" oninput="liveUpdate()"></div>
+
+      <div class="sec-lbl">Оплата</div>
+      <div class="fg"><label>Порядок оплаты</label>
+        <select id="t-payment" onchange="liveUpdate()">
+          <option value="prepay100">100% предоплата</option>
+          <option value="3070">30% предоплата, 70% при отгрузке</option>
+          <option value="post100">100% постоплата</option>
+          <option value="half">50% / 50%</option>
+        </select>
+      </div>
+      <div class="row2">
+        <div class="fg"><label>НДС</label>
+          <select id="t-vat" onchange="liveUpdate()">
+            <option value="none">Без НДС (УСН)</option>
+            <option value="5">В т.ч. НДС 5% (УСН)</option>
+            <option value="20">В т.ч. НДС 20%</option>
+          </select>
+        </div>
+        <div class="fg"><label>Гарантийный срок</label>
+          <select id="t-warranty" onchange="liveUpdate()">
+            <option value="6">6 месяцев</option>
+            <option value="3">3 месяца</option>
+            <option value="12">12 месяцев</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="sec-lbl">Email для уведомлений</div>
+      <div class="fg"><label>Email Заказчика (для п. 12.7)</label>
+        <input id="t-cl-notify-email" placeholder="заполнится из реквизитов заказчика" oninput="liveUpdate()">
+      </div>
+      <div class="fg"><label>Email Исполнителя (для п. 12.8)</label>
+        <input id="t-c-notify-email" placeholder="заполнится из реквизитов исполнителя" oninput="liveUpdate()">
+      </div>
+
+      <div class="sec-lbl">Дополнительно</div>
+
+      <div class="fg">
+        <label>Режим договора</label>
+        <div class="toggle-group">
+          <button class="tgl-btn active" id="mode-btn-full" onclick="setMode('full')">
+            <span class="tgl-icon">🧵</span>
+            <span class="tgl-label">Материалы заказчика</span>
+          </button>
+          <button class="tgl-btn" id="mode-btn-samples" onclick="setMode('samples')">
+            <span class="tgl-icon">📐</span>
+            <span class="tgl-label">Только образцы</span>
+          </button>
+          <button class="tgl-btn" id="mode-btn-spec" onclick="setMode('spec')">
+            <span class="tgl-icon">📋</span>
+            <span class="tgl-label">Только спецификация</span>
+          </button>
+        </div>
+        <div class="mode-hint" id="mode-hint">Акт №3 включён · п.2.2 с передачей материалов</div>
+      </div>
+
+      <div class="fg"><label>Особые условия <span class="hint">(необязательно)</span></label>
+        <textarea id="t-extra" placeholder="Дополнительные условия, отступления от стандарта..."></textarea>
+      </div>
+    </div>
+
+    <!-- SPEC (hidden — specs now created from registry) -->
+    <div class="panel" id="panel-spec" style="display:none!important">
+      <div class="sec-lbl">Спецификация</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div class="fg"><label>Номер спецификации</label><input id="s-num" placeholder="1" oninput="liveUpdate()"></div>
+        <div class="fg"><label>Дата</label><input type="date" id="s-date" oninput="liveUpdate()"></div>
+        <div class="fg"><label>Срок выполнения (дней)</label><input type="number" id="s-days" placeholder="14" oninput="liveUpdate()"></div>
+        <div class="fg"><label>Способ доставки</label>
+          <select id="s-delivery" onchange="liveUpdate()">
+            <option value="pickup">Самовывоз со склада</option>
+            <option value="contractor">Силами Исполнителя (в стоимости)</option>
+            <option value="client_pay">Силами Исполнителя (за счёт Заказчика)</option>
+            <option value="transport">Транспортной компанией</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="sec-lbl">Позиции</div>
+      <p style="font-size:12px;color:var(--slate);margin-bottom:12px;line-height:1.6;">Укажите услуги и/или товары. Сумма рассчитывается автоматически.</p>
+      <table class="items-table" id="items-table">
+        <thead>
+          <tr>
+            <th style="width:32%">Наименование услуги / товара</th>
+            <th style="width:14%">Артикул</th>
+            <th style="width:8%">Ед.</th>
+            <th style="width:10%">Кол-во</th>
+            <th style="width:20%">Цена, руб.</th>
+            <th style="width:8%"></th>
+          </tr>
+        </thead>
+        <tbody id="items-body"></tbody>
+      </table>
+      <button class="add-item-btn" onclick="addItem()">+ Добавить позицию</button>
+      <div class="totals-box">
+        <div class="totals-row"><span style="color:var(--slate)">Итого:</span><span class="totals-val accent" id="total-sum">—</span></div>
+        <div class="totals-row" id="vat-row" style="display:none"><span style="color:var(--slate)" id="vat-label">В т.ч. НДС:</span><span class="totals-val" id="total-vat">—</span></div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="gen-btn" id="gen-btn" onclick="generate()">⚡ Сформировать договор</button>
+      <button class="dl-btn" id="dl-btn" onclick="downloadDoc()" style="display:none">⬇ Скачать договор</button>
+      <div class="spinner-wrap" id="spinner"><div class="spin"></div> Формирование…</div>
+    </div>
+  </aside>
+
+  <main class="preview">
+    <div class="prev-lbl">Предварительный просмотр · A4</div>
+    <div class="empty" id="empty-state">
+      <div class="ei">🧵</div>
+      <div class="et">Договор не сформирован</div>
+      <div class="es">Заполните поля и нажмите «Сформировать»</div>
+    </div>
+    <div class="doc" id="doc-preview" style="display:none"></div>
+  </main>
+</div>
+
+<!-- ═══ КОНТРАГЕНТЫ (full-page view) ═══ -->
+<div class="view-page" id="view-clients" style="display:none">
+  <div class="vp-container">
+    <div class="vp-header">
+      <div>
+        <div class="vp-title">Контрагенты</div>
+        <div class="vp-desc">База заказчиков — заполняется автоматически при формировании договоров</div>
+      </div>
+      <button class="add-item-btn" onclick="saveCurrentClient()" style="width:auto;white-space:nowrap">+ Сохранить текущего заказчика</button>
+    </div>
+    <div class="vp-search">
+      <input type="text" id="clients-search" placeholder="Поиск по названию или ИНН..." oninput="renderClientsDB()" style="width:100%;padding:10px 14px;border:1px solid var(--input-border);background:var(--input-bg);font-family:'IBM Plex Sans',sans-serif;font-size:13px;color:var(--ink);border-radius:8px;outline:none;">
+    </div>
+    <div id="clients-db-list"></div>
+  </div>
+</div>
+
+<!-- ═══ РЕЕСТР ДОГОВОРОВ (full-page view) ═══ -->
+<div class="view-page" id="view-registry" style="display:none">
+  <div class="vp-container">
+    <div class="vp-header">
+      <div>
+        <div class="vp-title">Реестр договоров</div>
+        <div class="vp-desc">Автоматический журнал всех сформированных документов</div>
+      </div>
+    </div>
+    <div class="vp-search">
+      <input type="text" id="registry-search" placeholder="Поиск по номеру или контрагенту..." oninput="renderRegistry()" style="width:100%;padding:10px 14px;border:1px solid var(--input-border);background:var(--input-bg);font-family:'IBM Plex Sans',sans-serif;font-size:13px;color:var(--ink);border-radius:8px;outline:none;">
+    </div>
+    <div id="registry-list"></div>
+  </div>
+</div>
+
+<!-- CONTRACT VIEWER MODAL -->
+<div class="viewer-overlay" id="viewer-overlay">
+  <div class="viewer-wrap">
+    <div class="viewer-toolbar">
+      <span class="viewer-title" id="viewer-title"></span>
+      <div style="display:flex;gap:8px">
+        <button class="viewer-close" onclick="closeViewer()">Закрыть</button>
+      </div>
+    </div>
+    <!-- Tabs -->
+    <div id="viewer-tabs" style="display:flex;gap:0;border-bottom:1px solid var(--line);margin-bottom:0">
+      <button class="vtab active" onclick="switchViewerTab('contract',this)">Договор</button>
+      <button class="vtab" onclick="switchViewerTab('specs',this)">Спецификации</button>
+      <button class="vtab" onclick="switchViewerTab('acts',this)">Акты</button>
+    </div>
+    <!-- Contract tab -->
+    <div class="vtab-panel active" id="vtab-contract">
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button class="cdb-btn" onclick="downloadFromViewer()" style="border-color:var(--gold);color:var(--gold)">⬇ Скачать договор</button>
+      </div>
+      <div class="viewer-doc" id="viewer-doc"></div>
+    </div>
+    <!-- Specs tab -->
+    <div class="vtab-panel" id="vtab-specs">
+      <div id="viewer-specs-list"></div>
+      <div style="margin-top:16px;padding:16px;border:1px dashed var(--line);border-radius:10px" id="new-spec-form">
+        <div style="font-size:12px;font-weight:700;color:var(--ink);margin-bottom:12px">+ Новая спецификация</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <div class="fg"><label>Номер</label><input id="ns-num" style="height:38px"></div>
+          <div class="fg"><label>Дата</label><input type="date" id="ns-date" style="height:38px"></div>
+          <div class="fg"><label>Срок (дней)</label><input type="number" id="ns-days" placeholder="14" style="height:38px"></div>
+          <div class="fg"><label>Доставка</label>
+            <select id="ns-delivery" style="height:38px">
+              <option value="pickup">Самовывоз</option>
+              <option value="contractor">Силами Исполнителя (в стоимости)</option>
+              <option value="client_pay">Силами Исполнителя (за счёт Заказчика)</option>
+              <option value="transport">Транспортной компанией</option>
+            </select>
+          </div>
+        </div>
+        <div style="font-size:11px;font-weight:600;color:var(--slate);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Позиции</div>
+        <div id="ns-items-list"></div>
+        <button class="add-item-btn" onclick="addNsItem()" style="margin-bottom:12px">+ Добавить позицию</button>
+        <div style="margin-bottom:12px">
+          <label style="font-size:11px;font-weight:600;color:var(--slate);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px">Техническое задание (изображение)</label>
+          <div id="ns-tz-preview" style="display:none;margin-bottom:8px;position:relative">
+            <img id="ns-tz-img" style="max-width:100%;border-radius:8px;border:1px solid var(--line)">
+            <button onclick="clearTzImage()" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.6);border:none;color:#fff;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:14px;line-height:1">✕</button>
+          </div>
+          <label style="display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border:1px dashed var(--line);border-radius:8px;cursor:pointer;font-size:12px;color:var(--slate);transition:all .15s" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--line)';this.style.color='var(--slate)'">
+            📎 Прикрепить изображение
+            <input type="file" id="ns-tz-file" accept="image/*" onchange="loadTzImage(this)" style="display:none">
+          </label>
+        </div>
+        <button class="cdb-btn" onclick="generateNewSpec()" style="padding:10px 20px;background:var(--gold);color:#fff;border-color:var(--gold);font-size:12px">Сформировать спецификацию</button>
+      </div>
+    </div>
+    <!-- Acts tab -->
+    <div class="vtab-panel" id="vtab-acts">
+      <div id="viewer-acts-list"></div>
+      <div style="margin-top:16px;padding:16px;border:1px dashed var(--line);border-radius:10px">
+        <div style="font-size:12px;font-weight:700;color:var(--ink);margin-bottom:12px">+ Новый акт выполненных работ</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <div class="fg"><label>На основании спецификации</label>
+            <select id="na-spec-idx" style="height:38px"></select>
+          </div>
+          <div class="fg"><label>Дата акта</label><input type="date" id="na-date" style="height:38px"></div>
+        </div>
+        <button class="cdb-btn" onclick="generateNewAct()" style="padding:10px 20px;background:var(--gold);color:#fff;border-color:var(--gold);font-size:12px">Сформировать акт</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──
+let contractType = 'mixed';
+let items = [];
+
+// ── TYPE SWITCH ──
+function switchView(view){
+  document.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('nav-'+view)?.classList.add('active');
+  // hide all views
+  document.querySelector('.app').style.display = view==='contract' ? 'grid' : 'none';
+  document.getElementById('view-clients').style.display = view==='clients' ? 'block' : 'none';
+  document.getElementById('view-registry').style.display = view==='registry' ? 'block' : 'none';
+  // refresh lists
+  if(view==='clients') renderClientsDB();
+  if(view==='registry') renderRegistry();
+}
+
+// ── TAB SWITCH ──
+function switchTab(panel, el) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-'+panel).classList.add('active');
+}
+
+// ── ITEMS ──
+function addItem(name,unit,qty,price,article) {
+  items.push({name:name||'',article:article||'',unit:unit||'шт.',qty:qty||'',price:price||''});
+  renderItems();
+}
+function removeItem(i){items.splice(i,1);renderItems();}
+function renderItems(){
+  const body = document.getElementById('items-body');
+  body.innerHTML = items.map((it,i)=>`<tr>
+    <td><input value="${esc(it.name)}" oninput="items[${i}].name=this.value;calcItems()" placeholder="Пошив футболки / DTF-нанесение"></td>
+    <td><input value="${esc(it.article||'')}" oninput="items[${i}].article=this.value" placeholder="ART-001" style="font-size:11px"></td>
+    <td><select oninput="items[${i}].unit=this.value" style="padding:7px 4px">
+      ${['шт.','кг','м','услуга','компл.'].map(u=>`<option${it.unit===u?' selected':''}>${u}</option>`).join('')}
+    </select></td>
+    <td><input type="number" value="${it.qty}" oninput="items[${i}].qty=this.value;calcItems()" placeholder="10" style="text-align:center"></td>
+    <td><input type="number" value="${it.price}" oninput="items[${i}].price=this.value;calcItems()" placeholder="0" style="text-align:right"></td>
+    <td style="text-align:center"><button class="del-row" onclick="removeItem(${i})">✕</button></td>
+  </tr>`).join('');
+  calcItems();
+}
+function calcItems(){
+  const vat = g('t-vat');
+  let total=0;
+  items.forEach(it=>total+=(parseFloat(it.qty)||0)*(parseFloat(it.price)||0));
+  const vatAmt = vat==='20' ? total*20/120 : vat==='5' ? total*5/105 : 0;
+  document.getElementById('total-sum').textContent = fmt(total)+' руб.';
+  document.getElementById('total-vat').textContent = fmt(vatAmt)+' руб.';
+  const vatLbl = document.getElementById('vat-label');
+  if(vatLbl) vatLbl.textContent = vat==='5' ? 'В т.ч. НДС 5% (УСН):' : 'В т.ч. НДС 20%:';
+  document.getElementById('vat-row').style.display = (vat==='20'||vat==='5')&&total>0 ? '' : 'none';
+}
+
+// ── HELPERS ──
+function g(id){return (document.getElementById(id)||{}).value?.trim()||'';}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+function fmt(n){return n.toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmtMoney(v){return v?parseFloat(v).toLocaleString('ru-RU',{minimumFractionDigits:2})+' руб.':'___________';}
+function fmtDate(s){
+  if(!s)return '«___» __________ 20__ г.';
+  const d=new Date(s);
+  const m=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  return `«${d.getDate()}» ${m[d.getMonth()]} ${d.getFullYear()} г.`;
+}
+function fmtDateShort(s){
+  if(!s)return '___.___.20___';
+  const d=new Date(s);
+  return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
+}
+function paymentText(v){
+  return {
+    '3070': '30% (тридцать процентов) в качестве предоплаты до момента отгрузки, 70% (семьдесят процентов) — на момент отгрузки',
+    'prepay100': '100% (сто процентов) в качестве предоплаты до начала изготовления',
+    'post100': '100% (сто процентов) в течение 10 (десяти) рабочих дней с момента приёмки',
+    'half': '50% (пятьдесят процентов) предоплата, 50% — на момент отгрузки'
+  }[v] || '30% предоплата, 70% при отгрузке';
+}
+function deliveryText(v){
+  return {
+    'pickup':'самовывоз со склада Исполнителя',
+    'contractor':'силами Исполнителя (стоимость включена в цену)',
+    'client_pay':'силами Исполнителя за счёт Заказчика',
+    'transport':'транспортной компанией'
+  }[v]||'самовывоз';
+}
+
+// ── CONTRACT MODE (materials/samples) ──
+let contractMode = 'full'; // 'full' | 'samples' | 'spec'
+
+function setMode(mode){
+  contractMode = mode;
+  ['full','samples','spec'].forEach(m=>{
+    document.getElementById('mode-btn-'+m).classList.toggle('active', m===mode);
+  });
+  const hints = {
+    full:    '🧵 Акт №3 включён · Заказчик передаёт материалы · п.2.2 полный',
+    samples: '📐 Акт №3 исключён · Образцы-эталоны · материалы Исполнителя',
+    spec:    '📋 Акт №3 исключён · Работа только по Спецификации',
+  };
+  document.getElementById('mode-hint').textContent = hints[mode];
+  liveUpdate();
+}
+
+function liveUpdate(){
+  if(document.getElementById('doc-preview').style.display!=='none') buildDoc();
+  calcItems();
+  // auto-fill notify emails from contact fields
+  if(!g('t-cl-notify-email') && g('cl-email')) document.getElementById('t-cl-notify-email').value=g('cl-email');
+  if(!g('t-c-notify-email') && g('c-email')) document.getElementById('t-c-notify-email').value=g('c-email');
+}
+
+// ── MODE-AWARE PARAGRAPH HELPERS ──
+function p22(){
+  if(contractMode==='full'){
+    return '<p>2.2. Продукция изготавливается из материалов, ткани, фурнитуры и комплектующих Исполнителя с использованием его оборудования. Услуги по нанесению изображений на материалы Заказчика оказываются с использованием материалов Исполнителя; Исполнитель не несёт ответственности за качество предоставленных материалов. Передача материалов от Заказчика Исполнителю оформляется актом приёма-передачи (Приложение №3). При исполнении каждого заказа Исполнитель предоставляет Заказчику отчёт об использовании материалов (Приложение №4).</p>';
+  }
+  return '<p>2.2. Продукция изготавливается из материалов, ткани, фурнитуры и комплектующих Исполнителя с использованием его оборудования. Исполнитель несёт полную ответственность за качество используемых материалов.</p>';
+}
+function p23(){
+  if(contractMode==='spec'){
+    return '<p>2.3. Исполнитель обязуется изготовить Продукцию в соответствии с требованиями, указанными в Спецификациях (Приложение №1).</p>';
+  }
+  return '<p>2.3. Исполнитель обязуется изготовить Продукцию в соответствии с Образцами-эталонами, предоставленными и утверждёнными Заказчиком. При отсутствии Образцов-эталонов изготовление осуществляется в соответствии с Инструкцией по пошиву или требованиями Спецификаций.</p>';
+}
+function p_act_start(){
+  if(contractMode!=='full') return '';
+  return '<hr class="page-break">';
+}
+function p_act_end(){ return ''; }
+
+// ── BUILD DOCUMENT ──
+// ОГРН vs ОГРНИП: ИНН 12 цифр = ИП → ОГРНИП, иначе ОГРН
+function ogrnLabel(inn){ return (inn||'').replace(/\D/g,'').length===12?'ОГРНИП':'ОГРН'; }
+function isLegalEntity(inn){ return (inn||'').replace(/\D/g,'').length===10; }
+
+function normalizeSigner(s){
+  // "ДИРЕКТОР Иванов И.И." → "Директора Иванова И.И."
+  // Приводим должность к нормальному регистру
+  return (s||'').replace(/^([А-ЯЁA-Z\s-]+?)(\s+[А-ЯЁA-Z][а-яёa-z])/,function(m,title,rest){
+    return title.charAt(0).toUpperCase()+title.slice(1).toLowerCase()+rest;
+  });
+}
+
+function normBasis(b){ return (b||'').trim()==='Устав'?'Устава':(b||'Устава'); }
+
+function partyIntro(name, inn, ogrnLbl, ogrn, signer, signerGen, basis){
+  const base = `<strong>${esc(name)}</strong>, ИНН ${inn||'_______________'} ${ogrnLbl} ${ogrn||'_______________'}`;
+  if(isLegalEntity(inn) && (signerGen||signer)){
+    const display = signerGen || normalizeSigner(signer);
+    return base + `, в лице ${esc(display)}, действующего на основании ${esc(normBasis(basis))}`;
+  }
+  return base;
+}
+
+function buildDoc(){
+  const cName  = g('c-name')||'Исполнитель';
+  const clName = g('cl-name')||'Заказчик';
+  const docNum = g('t-num')||'_______________';
+  const cOgrnLbl  = ogrnLabel(g('c-inn'));
+  const clOgrnLbl = ogrnLabel(g('cl-inn'));
+  const vat    = g('t-vat');
+  const warranty = g('t-warranty')||'6';
+  const clEmail = g('t-cl-notify-email')||g('cl-email')||'____________________';
+  const cEmail  = g('t-c-notify-email')||g('c-email')||'____________________';
+
+  // ── Spec items table ──
+  let specTotal=0;
+  const specRows = items.filter(it=>it.name).map((it,i)=>{
+    const sum=(parseFloat(it.qty)||0)*(parseFloat(it.price)||0);
+    specTotal+=sum;
+    return `<tr><td>${i+1}</td><td>${esc(it.name)}</td><td style="font-size:10px">${esc(it.article||'')}</td><td style="text-align:center">${esc(it.unit||'шт.')}</td>
+    <td style="text-align:center">${it.qty||'—'}</td>
+    <td style="text-align:right">${it.price?fmt(parseFloat(it.price)):'—'}</td>
+    <td style="text-align:right;font-weight:500">${sum>0?fmt(sum):'—'}</td></tr>`;
+  }).join('');
+  const vatAmt = vat==='20'?specTotal*20/120:vat==='5'?specTotal*5/105:0;
+  const vatNote = vat==='20'?`В т.ч. НДС 20%: ${fmt(vatAmt)} руб.`:vat==='5'?`В т.ч. НДС 5%: ${fmt(vatAmt)} руб.`:'Без НДС (УСН)';
+  const specTableHtml = items.some(it=>it.name) ? `
+    <table class="doc-table"><thead><tr>
+      <th style="width:4%">№</th><th style="width:30%">Наименование услуги/товара</th>
+      <th style="width:12%">Артикул</th><th style="width:6%">Ед.</th><th style="width:8%">Кол-во</th>
+      <th style="width:18%">Цена, руб.</th><th style="width:22%">Сумма, руб.</th>
+    </tr></thead><tbody>${specRows}</tbody><tfoot>
+      <tr class="total-row"><td colspan="6" style="text-align:right">Итого:</td><td style="text-align:right">${fmt(specTotal)}</td></tr>
+    </tfoot></table>
+    <p style="font-size:10.5px;color:#52637a;margin-top:4px">${vatNote}</p>` : '<p style="color:#aaa;font-size:11px;font-style:italic">Позиции не добавлены</p>';
+
+  // ── Rekvizity blocks ──
+  const rekvA = [
+    g('c-inn')?'ИНН: '+g('c-inn'):'',
+    g('c-ogrn')?cOgrnLbl+': '+g('c-ogrn'):'',
+    g('c-addr')?'Юр. адрес: '+g('c-addr'):'',
+    (g('c-postal')&&g('c-postal')!=='совпадает с юридическим')?'Почт. адрес: '+g('c-postal'):'',
+    g('c-bank')?'Банк: '+g('c-bank'):'',
+    g('c-bik')?'БИК: '+g('c-bik'):'',
+    g('c-rs')?'Р/с: '+g('c-rs'):'',
+    g('c-ks')?'К/с: '+g('c-ks'):'',
+    g('c-email')?'Email: '+g('c-email'):'',
+    g('c-phone')?'Тел.: '+g('c-phone'):'',
+    (g('c-edo-op')||g('c-edo-id'))?'ЭДО: '+(g('c-edo-op')||'')+(g('c-edo-id')?', ID: '+g('c-edo-id'):''):'',
+  ].filter(Boolean);
+
+  const rekvB = [
+    g('cl-inn')?'ИНН: '+g('cl-inn'):'',
+    g('cl-kpp')?'КПП: '+g('cl-kpp'):'',
+    g('cl-ogrn')?clOgrnLbl+': '+g('cl-ogrn'):'',
+    g('cl-addr')?'Юр. адрес: '+g('cl-addr'):'',
+    (g('cl-postal')&&g('cl-postal')!=='совпадает с юридическим')?'Почт./факт. адрес: '+g('cl-postal'):'',
+    g('cl-bank')?'Банк: '+g('cl-bank'):'',
+    g('cl-bik')?'БИК: '+g('cl-bik'):'',
+    g('cl-rs')?'Р/с: '+g('cl-rs'):'',
+    g('cl-ks')?'К/с: '+g('cl-ks'):'',
+    g('cl-email')?'Email: '+g('cl-email'):'',
+    g('cl-phone')?'Тел.: '+g('cl-phone'):'',
+    (g('cl-edo-op')||g('cl-edo-id'))?'ЭДО: '+(g('cl-edo-op')||'')+(g('cl-edo-id')?', ID: '+g('cl-edo-id'):''):'',
+  ].filter(Boolean);
+
+  const sigPairA = `<div class="s-line"></div><div class="s-cap">${esc(g('c-signer')||'_______________')} / _________________ /</div>`;
+  const sigPairB = `<div class="s-line"></div><div class="s-cap">${esc(g('cl-signer')||g('cl-name')||'_______________')} / _________________ /</div>`;
+
+  const extra = g('t-extra');
+
+  // ── Act helper (uses closure vars) ──
+  function getActHtml(){
+    if(contractMode!=='full') return '';
+    return `<hr class="page-break">
+
+  <div style="margin-bottom:10px">
+    <span class="appendix-badge">ПРИЛОЖЕНИЕ № 3</span>
+  </div>
+  <div style="font-family:'IBM Plex Sans',sans-serif;font-size:14px;font-weight:700;color:var(--accent);margin-bottom:4px;">
+    АКТ ПРИЁМКИ-ПЕРЕДАЧИ МАТЕРИАЛОВ № ___
+  </div>
+  <div style="font-size:10.5px;color:var(--slate);margin-bottom:14px;">
+    к Договору поставки и оказания услуг № ${esc(docNum)} от ${fmtDateShort(g('t-date'))}<br>
+    Россия, Кировская область, г. Киров, ${fmtDate(g('s-date')||g('t-date'))}
+  </div>
+
+  <div class="pb" style="margin-bottom:16px">
+    ${partyIntro(cName, g('c-inn'), cOgrnLbl, g('c-ogrn'), g('c-signer'), g('c-signer-gen'), '')}, именуем${isLegalEntity(g('c-inn'))?'ое':'ый(-ая)'} далее «Исполнитель», и
+    ${partyIntro(clName, g('cl-inn'), clOgrnLbl, g('cl-ogrn'), g('cl-signer'), g('cl-signer-gen'), g('cl-basis'))}, именуем${isLegalEntity(g('cl-inn'))?'ое':'ый(-ая)'} далее «Заказчик»,
+    подписали данный акт о следующем: от Заказчика Исполнителю передаются следующие материалы:
+  </div>
+
+  <table class="doc-table">
+    <thead><tr>
+      <th>Тип ткани</th><th>Цвет</th><th>№ партии</th>
+      <th style="text-align:center">Кол-во рулонов</th><th style="text-align:center">Кол-во кг</th>
+    </tr></thead>
+    <tbody>
+      <tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td style="height:28px">&nbsp;</td><td>&nbsp;</td></tr>
+      <tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+      <tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+      <tr class="total-row"><td colspan="3" style="text-align:right">Итого:</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+    </tbody>
+  </table>
+
+  <div style="font-size:10.5px;color:var(--slate);margin:12px 0 20px;line-height:1.7;">
+    Подписывая настоящий Акт, Стороны подтверждают получение Исполнителем материалов для целей использования при оказании услуг по пошиву готовых изделий, определённых Договором.
+  </div>
+
+  <div class="sigs" style="margin-top:16px">
+    <div class="sig">
+      <div class="s-lbl">Исполнитель</div>
+      <div class="s-name">${esc(cName)}</div>
+      ${sigPairA}
+    </div>
+    <div class="sig">
+      <div class="s-lbl">Заказчик</div>
+      <div class="s-name">${esc(clName)}</div>
+      ${sigPairB}
+    </div>
+  </div>`;
+  }
+
+  document.getElementById('doc-preview').innerHTML = `
+
+  <!-- ═══ ШАПКА ДОГОВОРА ═══ -->
+  <div class="dh">
+    <div class="dh-left">
+      <div class="co-name">${esc(cName)}</div>
+      <div class="co-det">${[g('c-inn')?'ИНН '+g('c-inn'):'',g('c-ogrn')?cOgrnLbl+' '+g('c-ogrn'):''].filter(Boolean).join(' · ')}</div>
+    </div>
+    <div class="dh-right">
+      <span class="dt">ДОГОВОР ПОСТАВКИ И ОКАЗАНИЯ УСЛУГ</span>
+      <div class="dn">№ ${esc(docNum)}</div>
+      <div class="dd">Россия, Кировская область, г. Киров, ${fmtDate(g('t-date'))}</div>
+    </div>
+  </div>
+  <div class="gr"></div>
+
+  <!-- ПРЕАМБУЛА -->
+  <div class="pb">
+    ${partyIntro(cName, g('c-inn'), cOgrnLbl, g('c-ogrn'), g('c-signer'), g('c-signer-gen'), '')},
+    именуем${isLegalEntity(g('c-inn'))?'ое':'ый(-ая)'} далее <strong>«Исполнитель/Поставщик»</strong>, с одной стороны, и
+    ${partyIntro(clName, g('cl-inn'), clOgrnLbl, g('cl-ogrn'), g('cl-signer'), g('cl-signer-gen'), g('cl-basis'))},
+    именуем${isLegalEntity(g('cl-inn'))?'ое':'ый(-ая)'} далее <strong>«Заказчик/Покупатель»</strong>, с другой стороны,
+    в совместном упоминании именуемые <strong>«Стороны»</strong>,
+    заключили настоящий договор о нижеследующем:
+  </div>
+
+  <!-- 1. ОПРЕДЕЛЕНИЯ -->
+  <div class="ds"><div class="ds-title"><span class="num">1</span>Определения</div>
+  <div class="ds-body">
+    <p>1.1. <strong>Готовая продукция / Продукция / Изделия</strong>, а также услуги нанесения методом трафаретной печати, DTF-печати, сублимационной печати, машинной вышивки — определённое Спецификацией количество изделий или услуг с использованием материалов Заказчика или Исполнителя (далее — Продукция).</p>
+    <p>1.2. <strong>Образец-эталон</strong> — образцы Изделий, утверждённые в качестве эталонов для сравнения при изготовлении и приёмке.</p>
+    <p>1.3. <strong>Инструкция по пошиву или нанесению (техническое задание)</strong> — макеты дизайна готовых изделий с указанием обязательных условий, внешнего вида, размещения всех элементов, размеров и т.п. (Приложение №2).</p>
+  </div></div>
+
+  <!-- 2. ПРЕДМЕТ ДОГОВОРА -->
+  <div class="ds"><div class="ds-title"><span class="num">2</span>Предмет договора</div>
+  <div class="ds-body">
+    <p>2.1. Исполнитель обязуется выполнить работы по изготовлению (далее — Работы) и поставке Заказчику по его заказам Продукции, а Заказчик обязуется принять выполненные работы и оплатить их в размере и порядке, предусмотренными настоящим Договором и Спецификациями.</p>
+    ${p22()}
+    ${p23()}
+    <p>2.4. Изготовление и поставка каждой партии осуществляется на основании Спецификаций (Приложение №1), подписанных уполномоченными представителями Сторон.</p>
+    <p>2.5. Право собственности и риск случайной гибели переходят к Заказчику с момента передачи Продукции и подписания товарной накладной либо акта выполненных работ.</p>
+    <p>2.6. На каждый заказ оформляются: товарная накладная, акт выполненных работ${contractMode==='full'?', акт приёма-передачи материалов Заказчика (Приложение №3) и отчёт об их использовании (Приложение №4)':' '} и счёт на оплату.</p>
+  </div></div>
+
+  <!-- 3. ЦЕНА И РАСЧЁТЫ -->
+  <div class="ds"><div class="ds-title"><span class="num">3</span>Цена и порядок расчётов</div>
+  <div class="ds-body">
+    <p>3.1. Цена Договора представляет собой стоимость всех оказанных Исполнителем услуг по изготовлению Готовой продукции и/или поставки товаров.</p>
+    <p>3.2. Стоимость услуг по пошиву каждой партии Изделий и порядок оплаты определяются в соответствующей Спецификации, подписанной Сторонами.</p>
+    <p>3.3. Заказчик оплачивает партии Изделий в следующем порядке: <span class="val">${paymentText(g('t-payment')||'prepay100')}</span>. Допускается досрочная оплата.</p>
+    <p>3.4. Цены установлены в рублях. Стоимость Изделий не включает упаковку.</p>
+    <p>3.5. Моментом исполнения обязательств Заказчика по оплате признаётся дата зачисления денежных средств на счёт Исполнителя.</p>
+    <p>3.6. Авансовые платежи и отсрочка оплаты, предусмотренные Спецификациями, не рассматриваются как товарный и/или коммерческий кредит; проценты по ст. 317.1 и 395 ГК РФ не начисляются.</p>
+  </div></div>
+
+  <!-- 4. РАЗМЕЩЕНИЕ ЗАКАЗА -->
+  <div class="ds"><div class="ds-title"><span class="num">4</span>Размещение заказа</div>
+  <div class="ds-body">
+    <p>4.1. Заказчик согласовывает с Исполнителем заказ на изготовление каждой партии Продукции любым не запрещённым законом способом.</p>
+    <p>4.2. В течение 3 (трёх) рабочих дней с момента получения заказа Исполнитель при согласии исполнить заказ обязуется составить, подписать со своей стороны и направить Заказчику Спецификацию.</p>
+    <p>4.3. Заказчик направляет скан-копию подписанной Спецификации на адрес электронной почты Исполнителя или через ЭДО.</p>
+    <p>4.4. После подписания Спецификации Сторонами заказ считается принятым к исполнению.</p>
+  </div></div>
+
+  <!-- 5. СРОКИ И ПРИЁМКА -->
+  <div class="ds"><div class="ds-title"><span class="num">5</span>Сроки и порядок приёмки</div>
+  <div class="ds-body">
+    <p>5.1. Изготовление и поставка партии производятся в сроки, указанные в Спецификациях. Допускается досрочная поставка при согласовании с Заказчиком.</p>
+    <p>5.2. Заказчик обязан сообщить дату готовности принять Изделия в течение 3 (трёх) дней с момента уведомления о готовности партии.</p>
+    <p>5.3. Датой выполнения работ считается дата подписания Заказчиком товарной накладной и/или УПД и/или Акта выполненных работ.</p>
+    <p>5.4. Доставка осуществляется согласованным в Спецификации способом.</p>
+    <p>5.5. Приёмка по количеству, ассортименту и качеству производится Заказчиком в течение 3 (трёх) рабочих дней с момента получения Продукции.</p>
+    <p>5.6. Если в течение 3 (трёх) рабочих дней с даты уведомления о готовности Заказчик не направил мотивированный письменный отказ, Продукция считается принятой в полном объёме надлежащего качества.</p>
+  </div></div>
+
+  <!-- 6. КАЧЕСТВО И ГАРАНТИИ -->
+  <div class="ds"><div class="ds-title"><span class="num">6</span>Качество продукции и гарантии</div>
+  <div class="ds-body">
+    <p>6.1. Исполнитель гарантирует, что результат выполненных работ соответствует условиям Договора, техническому заданию и утверждённым Образцам-эталонам.</p>
+    <p>6.2. Гарантийный срок на результат работ составляет <span class="val">${warranty} месяцев</span> с момента передачи Продукции Заказчику.</p>
+    <p>6.3. В течение гарантийного срока Исполнитель обязан за свой счёт устранить выявленные недостатки в течение 14 (четырнадцати) рабочих дней либо изготовить изделие заново, либо возвратить часть уплаченной стоимости.</p>
+    <p>6.4. Гарантия распространяется на: прочность швов и креплений; целостность фурнитуры; стойкость печати и вышивки при соблюдении правил ухода.</p>
+    <p>6.5. Гарантия не распространяется на механические повреждения по вине Заказчика, использование не по назначению, нарушение правил ухода.</p>
+    <p>6.6. Допустимый брак при нанесении изображений: при тиражах до 100 шт. — не более 5 шт.; от 100 шт. — до 5% от тиража. Браком является: несовпадение трафарета, отсутствие цвета, неправильное расположение принта.</p>
+  </div></div>
+
+  <!-- 7. ОТВЕТСТВЕННОСТЬ -->
+  <div class="ds"><div class="ds-title"><span class="num">7</span>Ответственность сторон</div>
+  <div class="ds-body">
+    <p>7.1. При нарушении сроков выполнения работ или передачи Продукции Исполнитель уплачивает Заказчику неустойку в размере <span class="val">0,1%</span> от стоимости не выполненных в срок работ за каждый день просрочки, но не более <span class="val">20%</span> от указанной стоимости.</p>
+    <p>7.2. При нарушении сроков оплаты Заказчик уплачивает Исполнителю неустойку в размере <span class="val">0,1%</span> от суммы задолженности за каждый день просрочки, но не более <span class="val">20%</span>.</p>
+    <p>7.3. Неустойка начисляется автоматически с момента наступления просрочки и подлежит уплате по письменному требованию.</p>
+    <p>7.4. Уплата неустоек не освобождает Стороны от выполнения обязательств в полном объёме.</p>
+    <p>7.5. Исполнитель вправе привлекать субподрядчиков только с письменного согласия Заказчика, при этом несёт ответственность за их действия как за свои собственные.</p>
+  </div></div>
+
+  <!-- 8. ФОРС-МАЖОР -->
+  <div class="ds"><div class="ds-title"><span class="num">8</span>Обстоятельства непреодолимой силы</div>
+  <div class="ds-body">
+    <p>8.1. К форс-мажору относятся обстоятельства, неподконтрольные Сторонам: война, мобилизация, массовая радиация, восстание, забастовки, нормативные акты, существенно меняющие налоговую и/или валютную политику.</p>
+    <p>8.2. Факт наступления форс-мажора должен быть подтверждён компетентными государственными органами. Действия третьих лиц, привлечённых Сторонами, форс-мажором не являются.</p>
+    <p>8.3. Сторона, считающая, что наступили форс-мажорные обстоятельства, обязана уведомить другую Сторону в пятидневный срок с приложением подтверждающих документов.</p>
+    <p>8.4. Если форс-мажор продолжается более 2 (двух) месяцев, Стороны проводят переговоры о целесообразности продолжения исполнения Договора.</p>
+  </div></div>
+
+  <!-- 9. РАЗРЕШЕНИЕ СПОРОВ -->
+  <div class="ds"><div class="ds-title"><span class="num">9</span>Разрешение споров</div>
+  <div class="ds-body">
+    <p>9.1. Все споры подлежат разрешению путём переговоров. Претензионный порядок обязателен.</p>
+    <p>9.2. Претензия направляется в письменной форме; мотивированный ответ — в течение 10 (десяти) календарных дней с даты её получения.</p>
+    <p>9.3. При недостижении согласия споры рассматриваются в арбитражном суде по месту нахождения (юридическому адресу) истца.</p>
+  </div></div>
+
+  <!-- 10. ИНТЕЛЛЕКТУАЛЬНАЯ СОБСТВЕННОСТЬ -->
+  <div class="ds"><div class="ds-title"><span class="num">10</span>Интеллектуальная собственность</div>
+  <div class="ds-body">
+    <p>10.1. Заказчик гарантирует, что предоставленные макеты, логотипы, товарные знаки и иные объекты интеллектуальной собственности не нарушают права третьих лиц.</p>
+    <p>10.2. Исполнитель выполняет работы строго на основании материалов Заказчика и не несёт ответственности за претензии третьих лиц, связанные с нарушением авторских прав по вине Заказчика.</p>
+    <p>10.3. В случае предъявления претензий третьих лиц вся ответственность, включая судебные расходы, возлагается на Заказчика.</p>
+  </div></div>
+
+  <!-- 11. ФОТО/ВИДЕО -->
+  <div class="ds"><div class="ds-title"><span class="num">11</span>Использование фото- и видеоматериалов</div>
+  <div class="ds-body">
+    <p>11.1. Исполнитель вправе осуществлять фото- и видеосъёмку изготовленной Продукции и использовать материалы для демонстрации портфолио и рекламы исключительно с письменного разрешения Заказчика.</p>
+    <p>11.2. По письменному требованию Заказчика Исполнитель обязан удалить элементы, позволяющие идентифицировать Заказчика или его бренд.</p>
+  </div></div>
+
+  <!-- 12. ПРОЧИЕ УСЛОВИЯ -->
+  <div class="ds"><div class="ds-title"><span class="num">12</span>Прочие условия</div>
+  <div class="ds-body">
+    <p>12.1. Исполнитель не вправе выпускать Продукцию с товарными знаками Заказчика или по его Технической документации сверх объёма, установленного настоящим Договором.</p>
+    <p>12.2. Во всём, не урегулированном Договором, Стороны руководствуются действующим гражданским законодательством РФ.</p>
+    <p>12.3. Все переговоры и переписка между Сторонами, имевшие место до подписания настоящего Договора, утрачивают силу с момента его подписания.</p>
+    <p>12.4. Все Спецификации, дополнения, приложения и изменения к Договору являются его неотъемлемой частью и действительны при условии подписания уполномоченными представителями Сторон.</p>
+    <p>12.5. Стороны признают юридическую силу факсимильных и сканированных копий Договора, приложений, Спецификаций, актов, протоколов и подписей Сторон. Оригиналы пересылаются в пятидневный срок после подписания.</p>
+    <p>12.6. Счета, заявки, протоколы сверки, письма, отправленные по электронной почте, имеют такую же юридическую силу, что и документы в простой письменной форме.</p>
+    <p>12.7. Уведомления, направляемые Исполнителем Заказчику, направляются на адрес: <span class="val">${esc(clEmail)}</span> или посредством ЭДО.</p>
+    <p>12.8. Сообщения Исполнителя, направляемые Заказчику, могут исходить только с адреса: <span class="val">${esc(cEmail)}</span>.</p>
+    <p>12.9. Стороны обязуются соблюдать конфиденциальность сведений, полученных в рамках настоящего Договора. Раскрытие третьим лицам допускается только с письменного согласия другой Стороны.</p>
+    <p>12.10. Договор составлен в двух экземплярах, имеющих равную юридическую силу.</p>
+    ${extra?'<p>12.11. '+esc(extra)+'</p>':''}
+  </div></div>
+
+  <!-- 13. ЭДО -->
+  <div class="ds"><div class="ds-title"><span class="num">13</span>Электронный документооборот</div>
+  <div class="ds-body">
+    <p>13.1. Стороны вправе обмениваться всеми документами по Договору посредством системы ЭДО.</p>
+    <p>13.2. Электронные документы, заверенные усиленной НЭП уполномоченных лиц, имеют такую же юридическую силу, как документы на бумажных носителях (ФЗ от 06.04.2011 №63-ФЗ «Об электронной подписи»).</p>
+    <p>13.3. Подписание Актов через ЭДО означает, что работы выполнены в полном объёме и надлежащего качества, если иное не заявлено Стороной при отказе от подписания.</p>
+  </div></div>
+
+  <!-- 14. СРОК ДЕЙСТВИЯ -->
+  <div class="ds"><div class="ds-title"><span class="num">14</span>Срок действия договора</div>
+  <div class="ds-body">
+    <p>14.1. Договор вступает в силу с момента подписания и действует до ${g('t-end-date')?fmtDate(g('t-end-date')):'«___» __________ 20__ г.'} либо до полного исполнения обязательств.</p>
+    <p>14.2. Договор может быть расторгнут по взаимному соглашению или в одностороннем внесудебном порядке при направлении письменного уведомления за 30 (тридцать) календарных дней.</p>
+    <p>14.3. Если ни одна из Сторон за 10 (десять) дней до даты прекращения не заявит о расторжении, Договор считается пролонгированным на следующий календарный год.</p>
+  </div></div>
+
+  <!-- ПРИЛОЖЕНИЯ -->
+  <div class="ds"><div class="ds-title"><span class="num">15</span>Приложения к договору</div>
+  <div class="ds-body">
+    <p>Приложение №1 — Спецификация</p>
+    ${contractMode!=='spec'?'<p>Приложение №2 — Инструкция по пошиву или нанесению (техническое задание)</p>':''}
+    ${contractMode==='full'?'<p>Приложение №3 — Акт приёма-передачи материалов Заказчика</p><p>Приложение №4 — Отчёт об использовании материалов Заказчика</p>':''}
+  </div></div>
+
+  <!-- РЕКВИЗИТЫ И ПОДПИСИ -->
+  <div class="ds"><div class="ds-title"><span class="num">★</span>Реквизиты и подписи сторон</div></div>
+  <div class="sigs">
+    <div class="sig">
+      <div class="s-lbl">Исполнитель / Поставщик</div>
+      <div class="s-name">${esc(cName)}</div>
+      <div class="s-det">${rekvA.join('<br>')}</div>
+      ${sigPairA}
+    </div>
+    <div class="sig">
+      <div class="s-lbl">Заказчик / Покупатель</div>
+      <div class="s-name">${esc(clName)}</div>
+      <div class="s-det">${rekvB.join('<br>')}</div>
+      ${sigPairB}
+    </div>
+  </div>
+  <div class="stamp"><div class="stamp-txt">М.П.<br>Печать</div></div>
+
+  `;
+}
+
+// ── GENERATE ──
+function generate(){
+  const btn=document.getElementById('gen-btn'), sp=document.getElementById('spinner');
+  btn.style.display='none'; sp.style.display='flex';
+  setTimeout(()=>{
+    buildDoc();
+    document.getElementById('empty-state').style.display='none';
+    document.getElementById('doc-preview').style.display='block';
+    sp.style.display='none'; btn.style.display='flex';
+    document.getElementById('dl-btn').style.display='flex';
+    // auto-save client to DB if has name (with revision history)
+    (async()=>{
+      if(g('cl-name')) await saveCurrentClient();
+      await addToRegistry();
+      document.getElementById('t-num').value = getNextContractNum();
+    })();
+  },600);
+}
+
+// ── DOWNLOAD ──
+function downloadDoc(){
+  const docNum  = g('t-num')||'б-н';
+  const cName   = g('c-name')||'Исполнитель';
+  const clSign  = g('cl-signer') || g('cl-name') || '_______________';
+  const cSign   = g('c-signer')  || '_______________';
+  const inner   = document.getElementById('doc-preview').innerHTML;
+
+  // Build short signature label  e.g. "Тиханов А.В."
+  function shortSig(s){
+    const clean = s.replace(/^индивидуальный\s+предприниматель\s+/i,'').trim();
+    const p = clean.split(/\s+/);
+    return p.length >= 2 ? p[0]+' '+p.slice(1).map(w=>w[0]+'.').join('') : clean.slice(0,22);
+  }
+  const cShort  = shortSig(cSign);
+  const clShort = shortSig(clSign);
+
+  // --- Strip .val styling + force sigs onto new page in the inner HTML ---
+  // We post-process inner to remove class="val" → plain span,
+  // and insert page-break before the final .sigs block (реквизиты)
+  let body = inner
+    // Remove val highlight class → plain text
+    .replace(/class="val"/g, 'class="plain-val"')
+    // Force sig-section (реквизиты) to new page
+    .replace(
+      /(<div class="ds"><div class="ds-title"><span class="num">★<\/span>)/,
+      '<div class="sig-page-break"></div>$1'
+    );
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Договор № ${docNum}</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ════════════════════════════════
+   PAGE SETUP — no browser headers/footers
+   User must set margins to None in print dialog
+   ════════════════════════════════ */
+@page {
+  size: A4;
+  margin: 14mm 17mm 16mm 17mm;
+}
+
+
+/* ── RESET ── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+/* ── BODY ── */
+body {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 9.5pt;
+  color: #111;
+  line-height: 1.78;
+  /* page counter */
+  counter-reset: pagenum;
+}
+
+/* ════════════════════════════════
+   RUNNING FOOTER — fixed at bottom of every page
+   via margin-bottom on body + position:running()
+   Fallback for browsers that don't support @page running():
+   we use a repeated footer div approach instead.
+   ════════════════════════════════ */
+
+/* Footer printed via CSS generated content in @page bottom margin */
+/* This works reliably in Chrome/Edge */
+@page {
+  @bottom-left   { content: normal; } /* clear defaults */
+  @bottom-center { content: normal; }
+  @bottom-right  { content: normal; }
+}
+
+/* We use a fixed-position footer that repeats on print via "position:fixed" trick */
+.print-footer {
+  display: none;
+}
+.print-footer .pf-side {
+  display: flex;
+  flex-direction: column;
+  gap: 2pt;
+  width: 42%;
+}
+.print-footer .pf-side.right { text-align: right; align-items: flex-end; }
+.print-footer .pf-center {
+  text-align: center;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 7pt;
+  color: #b8943a;
+  padding-top: 1pt;
+}
+.pf-sigline {
+  display: block;
+  width: 100%;
+  border-bottom: 0.6pt solid #111;
+  height: 12pt;
+  margin-bottom: 2pt;
+}
+.pf-label { font-size: 6.5pt; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #888; }
+.pf-name  { font-size: 7.5pt; }
+
+/* Page number — CSS counter via @page not supported everywhere,
+   so we inject it via JS after load */
+.page-number::before { content: "Стр. " counter(page) " из " counter(pages); }
+
+/* ── HEADER ── */
+.dh { display:flex; justify-content:space-between; padding-bottom:10px; border-bottom:2.5px solid #b8943a; margin-bottom:16px; }
+.dh-left { max-width:50%; }
+.dh-right { text-align:right; max-width:50%; }
+.co-name { font-family:'IBM Plex Sans',sans-serif; font-size:10pt; font-weight:700; color:#111; }
+.co-det  { font-size:7.5pt; color:#111; line-height:1.55; }
+.dt { font-family:'IBM Plex Sans',sans-serif; font-size:11pt; font-weight:700; color:#111; display:block; text-align:right; text-transform:uppercase; letter-spacing:0.3px; }
+.dn { font-family:'IBM Plex Mono',monospace; font-size:9.5pt; color:#111; text-align:right; }
+.dd { font-size:8pt; color:#111; text-align:right; margin-top:2px; }
+.gr { height:2px; background:#b8943a; margin:0 0 16px; }
+
+/* ── PREAMBLE ── */
+.pb { background:#f9f7f2; border-left:4px solid #b8943a; padding:9px 13px; margin-bottom:13px; font-size:9pt; line-height:1.85; page-break-inside:auto; }
+.pb strong { color:#111; }
+
+/* ── SECTIONS ── */
+.ds { margin-bottom:12px; page-break-inside:auto; }
+.ds-title { font-family:'IBM Plex Sans',sans-serif; font-size:9pt; font-weight:600; color:#111;
+  text-transform:uppercase; letter-spacing:.08em; margin-bottom:4px; display:flex; align-items:center; gap:6px;
+  page-break-after:avoid; }
+.num { font-family:'IBM Plex Mono',monospace; font-size:7.5pt; background:#111; color:white;
+  width:14px; height:14px; border-radius:50%; display:inline-flex; align-items:center;
+  justify-content:center; flex-shrink:0; font-weight:500; }
+.ds-body { font-size:9pt; padding-left:20px; line-height:1.8; page-break-inside:auto; }
+.ds-body p { margin-bottom:3px; orphans:2; widows:2; }
+
+/* ── KEY VALUES: no highlight in print, just bold ── */
+.val, .plain-val { font-family:inherit; font-size:inherit; background:none !important;
+  border:none !important; padding:0 !important; border-radius:0 !important;
+  color:inherit !important; font-weight:600; }
+
+/* ── TABLE ── */
+.doc-table { width:100%; border-collapse:collapse; font-size:8pt; margin:5px 0; }
+.doc-table th { background:#f0ece4; font-weight:600; text-transform:uppercase; letter-spacing:.04em;
+  font-size:7pt; padding:4px 5px; border:1px solid #ccc; color:#52637a; text-align:left; }
+.doc-table td { border:1px solid #ccc; padding:4px 5px; font-size:8.5pt; }
+.doc-table tr:nth-child(even) td { background:#faf8f4; }
+.doc-table .total-row td { font-weight:600; background:#f5f1e8; }
+
+/* ── SIGNATURES block (last page) ── */
+.sigs { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:24px; padding-top:11px; border-top:1px solid #ccc; }
+.s-lbl { font-size:6.5pt; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:#111; margin-bottom:4px; }
+.s-name { font-size:9.5pt; font-weight:600; color:#111; margin-bottom:2px; }
+.s-det { font-size:7.5pt; color:#333; line-height:1.65; }
+.s-line { border-bottom:1px solid #111; margin:14px 0 4px; height:16px; }
+.s-cap { font-size:7.5pt; color:#333; }
+
+/* ── PAGE BREAKS ── */
+.sig-page-break { page-break-before: always; }
+hr.page-break   { page-break-before: always; border:none; margin:0; display:block; }
+.page-break     { page-break-before: always; }
+
+/* ── HIDE screen-only ── */
+.stamp, .doc::before, button { display:none !important; }
+
+/* ── APPENDIX ── */
+.appendix-badge { display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:7.5pt;
+  background:#111; color:white; padding:2px 7px; border-radius:10px;
+  margin-bottom:11px; letter-spacing:.05em; }
+.spec-title { font-size:9.5pt; font-weight:600; color:#111; margin:9px 0 4px; }
+
+/* Hide instruction banners when printing */
+@media print {
+  #before-print-tip, #print-tip { display:none !important; }
+}
+@media screen {
+  #print-tip { display:none; }
+}
+</style>
+</head>
+<body>
+
+<!-- FIXED FOOTER — repeats on every page when printing -->
+<div class="print-footer">
+  <div class="pf-side left">
+    <span class="pf-label">Исполнитель</span>
+    <span class="pf-sigline"></span>
+    <span class="pf-name">${cShort} / _________________ /</span>
+  </div>
+  <div class="pf-center">
+    Стр. <span id="pn"></span>
+  </div>
+  <div class="pf-side right">
+    <span class="pf-label">Заказчик</span>
+    <span class="pf-sigline"></span>
+    <span class="pf-name">${clShort} / _________________ /</span>
+  </div>
+</div>
+
+<!-- PRINT INSTRUCTION BANNER (screen only, hidden in print) -->
+<div id="print-tip" style="
+  display:none;
+  font-family:'IBM Plex Sans',sans-serif;
+  font-size:13px;
+  background:#fffbf0;
+  border:1px solid #b8943a;
+  border-radius:6px;
+  padding:12px 18px;
+  margin:16px;
+  color:#52637a;
+  line-height:1.7;
+">
+  <strong style="color:#17304f">⚠️ Важно для корректного PDF:</strong><br>
+  В диалоге печати необходимо <strong>отключить «Колонтитулы» (Headers and footers)</strong>,
+  чтобы убрать название файла и дату вверху/внизу страницы.
+</div>
+
+<!-- SCREEN-ONLY INSTRUCTION (shows before print dialog) -->
+<div id="before-print-tip" style="
+  font-family:'IBM Plex Sans',sans-serif;
+  font-size:13px;
+  background:#17304f;
+  color:white;
+  padding:14px 20px;
+  text-align:center;
+  line-height:1.7;
+">
+  📄 <strong>Откроется диалог печати.</strong>
+  Перед сохранением в PDF: <strong style="color:#e2cfa0">отключите «Колонтитулы» (Headers and footers)</strong>
+  в настройках печати → тогда шапка и подвал браузера не появятся.
+</div>
+
+<!-- CONTRACT BODY -->
+${body}
+
+<script>
+// Auto-open print dialog after fonts load
+window.addEventListener('load', function(){
+  // Small delay to let Google Fonts render
+  setTimeout(function(){ window.print(); }, 800);
+});
+// After print dialog closes — show instruction if needed
+window.addEventListener('afterprint', function(){
+  var tip = document.getElementById('print-tip');
+  if(tip) tip.style.display = 'block';
+});
+<\/script>
+</body>
+</html>`;
+
+  const blob = new Blob([html],{type:'text/html;charset=utf-8'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'Договор_'+docNum.replace(/\//g,'-')+'_'+cName.slice(0,22).replace(/[^а-яёa-z0-9ЁА-Я]/gi,'_')+'.html';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},1000);
+  showToast('📄 Файл скачан — откройте, печать откроется автоматически');
+}
+
+// ── MY DATA (localStorage, multi-profile) ──
+const MY_KEY = 'turbodogovory_my_profiles';
+const MY_ACTIVE_KEY = 'turbodogovory_active_profile';
+const MY_FIELDS = ['name','inn','ogrn','addr','postal','bank','bik','rs','ks','email','phone','edo-op','edo-id','signer'];
+
+function loadProfiles(){try{const d=JSON.parse(localStorage.getItem(MY_KEY)||'null');return Array.isArray(d)?d:[];}catch(e){return [];}}
+function saveProfiles(profiles){localStorage.setItem(MY_KEY,JSON.stringify(profiles));}
+function getActiveIdx(){const i=parseInt(localStorage.getItem(MY_ACTIVE_KEY)||'0');const p=loadProfiles();return i>=0&&i<p.length?i:0;}
+function setActiveIdx(i){localStorage.setItem(MY_ACTIVE_KEY,String(i));}
+
+// Migrate old single-profile format
+(function migrateOldData(){
+  const old=localStorage.getItem('turbodogovory_my_company');
+  if(!old)return;
+  try{
+    const data=JSON.parse(old);
+    if(data&&typeof data==='object'&&!Array.isArray(data)&&Object.keys(data).length>0){
+      data.profileName=data.name||'Профиль 1';
+      saveProfiles([data]);setActiveIdx(0);
+    }
+    localStorage.removeItem('turbodogovory_my_company');
+  }catch(e){}
+})();
+
+function renderProfileSelect(){
+  const sel=document.getElementById('my-profile-select');
+  const profiles=loadProfiles();
+  const idx=getActiveIdx();
+  sel.innerHTML='';
+  if(profiles.length===0){
+    sel.innerHTML='<option>Нет профилей</option>';return;
+  }
+  profiles.forEach((p,i)=>{
+    const o=document.createElement('option');
+    o.value=i;o.textContent=p.profileName||(p.name?p.name.slice(0,40):'Профиль '+(i+1));
+    if(i===idx)o.selected=true;
+    sel.appendChild(o);
+  });
+}
+
+function fillFormFromProfile(data){
+  MY_FIELDS.forEach(f=>{const el=document.getElementById('my-'+f);if(el)el.value=(data&&data[f])||'';});
+  const pn=document.getElementById('my-profile-name');
+  if(pn)pn.value=(data&&data.profileName)||'';
+}
+
+function openSettings(){
+  const profiles=loadProfiles();
+  renderProfileSelect();
+  const idx=getActiveIdx();
+  fillFormFromProfile(profiles[idx]||{});
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeSettings(){document.getElementById('modal-overlay').classList.remove('open');}
+function closeSettingsOutside(e){/* disabled — close only via ✕ or save */}
+
+function switchProfile(){
+  const sel=document.getElementById('my-profile-select');
+  const idx=parseInt(sel.value)||0;
+  setActiveIdx(idx);
+  const profiles=loadProfiles();
+  fillFormFromProfile(profiles[idx]||{});
+}
+
+function addProfile(){
+  const profiles=loadProfiles();
+  const num=profiles.length+1;
+  profiles.push({profileName:'Профиль '+num});
+  saveProfiles(profiles);
+  setActiveIdx(profiles.length-1);
+  renderProfileSelect();
+  fillFormFromProfile(profiles[profiles.length-1]);
+  showToast('Новый профиль создан');
+}
+
+function deleteProfile(){
+  const profiles=loadProfiles();
+  if(profiles.length===0)return;
+  const idx=getActiveIdx();
+  const name=profiles[idx].profileName||profiles[idx].name||'этот профиль';
+  if(!confirm('Удалить «'+name+'»?'))return;
+  profiles.splice(idx,1);
+  saveProfiles(profiles);
+  const newIdx=Math.min(idx,profiles.length-1);
+  setActiveIdx(Math.max(newIdx,0));
+  renderProfileSelect();
+  if(profiles.length>0)fillFormFromProfile(profiles[getActiveIdx()]);
+  else{MY_FIELDS.forEach(f=>{const el=document.getElementById('my-'+f);if(el)el.value='';});}
+  updateSettingsBtn();
+  showToast('Профиль удалён');
+}
+
+function saveMyData(){
+  const profiles=loadProfiles();
+  let idx=getActiveIdx();
+  if(profiles.length===0){profiles.push({});idx=0;}
+  const data=profiles[idx]||{};
+  MY_FIELDS.forEach(f=>{const el=document.getElementById('my-'+f);if(el)data[f]=el.value.trim();});
+  // Auto-name profile from company name if profileName is empty or default
+  if(!data.profileName||data.profileName.startsWith('Профиль ')){
+    data.profileName=data.name?data.name.slice(0,50):'Профиль '+(idx+1);
+  }
+  profiles[idx]=data;
+  saveProfiles(profiles);setActiveIdx(idx);
+  applyMyData(data);
+  renderProfileSelect();
+  closeSettings();
+  showToast('✓ Реквизиты сохранены');
+  updateSettingsBtn();
+}
+
+function applyMyData(data){
+  const map={'c-name':data.name,'c-inn':data.inn,'c-ogrn':data.ogrn,'c-addr':data.addr,
+    'c-postal':data.postal,'c-bank':data.bank,'c-bik':data.bik,'c-rs':data.rs,'c-ks':data.ks,
+    'c-email':data.email,'c-phone':data.phone,'c-edo-op':data['edo-op'],'c-edo-id':data['edo-id'],'c-signer':data.signer};
+  Object.entries(map).forEach(([id,val])=>{const el=document.getElementById(id);if(el&&val)el.value=val;});
+  liveUpdate();
+}
+
+function clearMyData(){
+  const profiles=loadProfiles();
+  const idx=getActiveIdx();
+  if(profiles[idx]){
+    profiles[idx]={profileName:profiles[idx].profileName||'Профиль '+(idx+1)};
+    saveProfiles(profiles);
+  }
+  MY_FIELDS.forEach(f=>{const el=document.getElementById('my-'+f);if(el)el.value='';});
+  updateSettingsBtn();
+  showToast('Данные профиля очищены');
+}
+
+function showToast(msg){
+  const t=document.getElementById('save-toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+function updateSettingsBtn(){
+  const btn=document.getElementById('settings-btn');
+  const profiles=loadProfiles();
+  const data=profiles[getActiveIdx()];
+  const has=data&&MY_FIELDS.some(f=>data[f]);
+  btn.classList.toggle('has-data',has);
+}
+
+// ── DEFAULT PROFILES ──
+const PROFILE_TIKHANOV = {
+  profileName: 'ИП Тиханов А. В.',
+  name:    'Индивидуальный предприниматель Тиханов Алексей Владимирович',
+  inn:     '434543395648',
+  ogrn:    '323435000000461',
+  addr:    '610047, Кировская обл., г. Киров, ул. Дзержинского, д. 60, кв. 159',
+  postal:  '610047, Кировская обл., г. Киров, ул. Дзержинского, д. 60, кв. 159',
+  bank:    'ПАО Филиал "Центральный" Банк ВТБ',
+  bik:     '044525411',
+  rs:      '40802810516454220554',
+  ks:      '30101810145250000411',
+  email:   'ip-tikhanov@mail.ru',
+  phone:   '+7 912 736 17 27',
+  'edo-op':'1С Калуга-Астрал',
+  'edo-id':'2AED444A198-C4A6-469B-BE39-9789CEDCDD45',
+  signer:  'Тиханов А. В.',
+};
+const PROFILE_SLAUTIN = {
+  profileName: 'ИП Слаутин И. М.',
+  name:    'Индивидуальный предприниматель Слаутин Иван Максимович',
+  inn:     '434557759197',
+  ogrn:    '326430000008810',
+  addr:    '610048, Россия, г. Киров, ул. Менделеева 29, кв 15',
+  postal:  '610048, Россия, г. Киров, ул. Менделеева 29, кв 15',
+  bank:    'ООО "ОЗОН Банк"',
+  bik:     '044525068',
+  rs:      '40802810800001873978',
+  ks:      '30101810645374525068',
+  email:   'mymerch43@yandex.ru',
+  phone:   '+7 953 130 38 06',
+  'edo-op':'',
+  'edo-id':'',
+  signer:  'Слаутин И. М.',
+};
+
+// ── CLIENTS DB (Supabase via API) ──
+const CL_FIELDS = ['name','inn','kpp','ogrn','addr','postal','bank','bik','rs','ks','email','phone','edo-op','edo-id','signer','signer-gen','basis'];
+const CL_API_FIELDS = ['name','inn','kpp','ogrn','addr','postal','bank','bik','rs','ks','email','phone','edo_op','edo_id','signer','signer_gen','basis'];
+
+let _clientsCache = [];
+let _clientsLoaded = false;
+
+function clFieldToApi(f){ return f.replace('-','_'); }
+function clFieldFromApi(f){ return f.replace('_','-'); }
+function clientToApi(c){
+  const o={};
+  CL_FIELDS.forEach(f=>{if(c[f]!==undefined) o[clFieldToApi(f)]=c[f];});
+  if(c.revisions) o.revisions=c.revisions;
+  if(c.id) o.id=c.id;
+  return o;
+}
+function clientFromApi(c){
+  const o={};
+  CL_FIELDS.forEach(f=>{ o[f]=c[clFieldToApi(f)]||''; });
+  o.id=c.id;
+  o.revisions=c.revisions||[];
+  o.lastUpdated=c.updated_at||'';
+  return o;
+}
+
+function loadClientsDB(){ return _clientsCache; }
+function saveClientsDB(arr){ _clientsCache=arr; }
+
+async function fetchClientsDB(){
+  try{
+    const res=await fetch('/api/turbodocs/clients');
+    const data=await res.json();
+    if(Array.isArray(data)) _clientsCache=data.map(clientFromApi);
+    _clientsLoaded=true;
+  }catch(e){console.error('fetchClientsDB',e);}
+  return _clientsCache;
+}
+
+async function apiSaveClient(clientData){
+  const body=clientToApi(clientData);
+  if(clientData.id){
+    body.id=clientData.id;
+    await fetch('/api/turbodocs/clients',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  } else {
+    const res=await fetch('/api/turbodocs/clients',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const saved=await res.json();
+    clientData.id=saved.id;
+  }
+}
+
+async function apiDeleteClient(id){
+  await fetch('/api/turbodocs/clients?id='+id,{method:'DELETE'});
+}
+
+function updateClientFormType(){
+  const inn=(document.getElementById('cl-inn')?.value||'').replace(/\D/g,'');
+  const isIP=inn.length===12;
+  // КПП — скрыть для ИП
+  document.getElementById('cl-kpp-wrap').style.display=isIP?'none':'block';
+  // ОГРН label
+  document.getElementById('cl-ogrn-label').textContent=isIP?'ОГРНИП':'ОГРН';
+  // Подписант: для ИП — просто ФИО, для юрлица — Должность и ФИО
+  document.getElementById('cl-signer-label').textContent=isIP?'ФИО для подписи':'Должность и ФИО';
+  document.getElementById('cl-signer').placeholder=isIP?'Иванов И.И.':'Генеральный директор Петров П.П.';
+  // Основание полномочий — скрыть для ИП
+  document.getElementById('cl-basis-wrap').style.display=isIP?'none':'block';
+  document.getElementById('cl-signer-gen-wrap').style.display=isIP?'none':'block';
+  if(isIP){document.getElementById('cl-kpp').value='';document.getElementById('cl-basis').value='';document.getElementById('cl-signer-gen').value='';}
+}
+
+async function lookupINN(){
+  const inn=document.getElementById('cl-inn')?.value?.trim();
+  const status=document.getElementById('inn-lookup-status');
+  const btn=document.getElementById('inn-lookup-btn');
+  if(!inn||inn.length<10){status.innerHTML='<span style="color:var(--red)">Введите ИНН (10 или 12 цифр)</span>';return;}
+  status.innerHTML='<span style="color:var(--slate)">Поиск...</span>';
+  btn.disabled=true;btn.style.opacity='.5';
+  try{
+    const res=await fetch('/api/inn-lookup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({inn})});
+    const data=await res.json();
+    if(!res.ok){status.innerHTML=`<span style="color:var(--red)">${data.error||'Не найдено'}</span>`;return;}
+    // Fill fields
+    document.getElementById('cl-name').value=data.name||'';
+    document.getElementById('cl-kpp').value=data.kpp||'';
+    document.getElementById('cl-ogrn').value=data.ogrn||'';
+    document.getElementById('cl-addr').value=data.addr||'';
+    if(data.director){
+      const signerVal=data.directorPost?(data.directorPost+' '+data.director):data.director;
+      document.getElementById('cl-signer').value=signerVal;
+    }
+    // Auto-fill basis for legal entities
+    if(data.type==='LEGAL' && !document.getElementById('cl-basis').value){
+      document.getElementById('cl-basis').value='Устава';
+    }
+    updateClientFormType();
+    liveUpdate();
+    status.innerHTML=`<span style="color:var(--green)">Найдено: ${esc(data.name)}</span>`;
+  }catch(e){
+    status.innerHTML=`<span style="color:var(--red)">Ошибка: ${e.message}</span>`;
+  }finally{
+    btn.disabled=false;btn.style.opacity='1';
+  }
+}
+
+function collectClientData(){
+  const data={};
+  CL_FIELDS.forEach(f=>{const el=document.getElementById('cl-'+f);if(el)data[f]=el.value.trim();});
+  return data;
+}
+
+async function saveCurrentClient(){
+  const data=collectClientData();
+  if(!data.name){showToast('Заполните наименование заказчика');return;}
+  const db=loadClientsDB();
+  const existing=db.findIndex(c=>c.inn && c.inn===data.inn && c.inn);
+  if(existing>=0){
+    if(!db[existing].revisions) db[existing].revisions=[];
+    const prev={};CL_FIELDS.forEach(f=>{if(db[existing][f])prev[f]=db[existing][f];});
+    prev.savedAt=db[existing].lastUpdated||'';
+    if(prev.name) db[existing].revisions.unshift(prev);
+    if(db[existing].revisions.length>10) db[existing].revisions.length=10;
+    CL_FIELDS.forEach(f=>{db[existing][f]=data[f];});
+    db[existing].lastUpdated=new Date().toISOString();
+    await apiSaveClient(db[existing]);
+  } else {
+    data.revisions=[];
+    data.lastUpdated=new Date().toISOString();
+    db.unshift(data);
+    await apiSaveClient(data);
+  }
+  saveClientsDB(db);
+  renderClientsDB();
+  showToast('Контрагент сохранён');
+}
+
+function applyClient(idx){
+  const db=loadClientsDB();
+  const c=db[idx];if(!c)return;
+  CL_FIELDS.forEach(f=>{const el=document.getElementById('cl-'+f);if(el)el.value=c[f]||'';});
+  liveUpdate();
+  switchView('contract');
+  switchTab('client',document.getElementById('tab-client'));
+  showToast('Реквизиты заказчика заполнены');
+}
+
+function showRevisions(idx){
+  const db=loadClientsDB();
+  const c=db[idx];if(!c||!c.revisions?.length)return;
+  const revHtml=c.revisions.map((r,ri)=>{
+    const date=r.savedAt?new Date(r.savedAt).toLocaleDateString('ru-RU',''):'-';
+    const fields=CL_FIELDS.filter(f=>r[f]).map(f=>{
+      const labels={name:'Наименование',inn:'ИНН',kpp:'КПП',ogrn:'ОГРН',addr:'Адрес',postal:'Почт.адрес',bank:'Банк',bik:'БИК',rs:'Р/с',ks:'К/с',email:'Email',phone:'Тел.',signer:'Подписант',basis:'Основание','edo-op':'ЭДО оператор','edo-id':'ЭДО ID'};
+      return `<div style="font-size:11px;color:var(--slate);line-height:1.6"><strong>${labels[f]||f}:</strong> ${esc(r[f])}</div>`;
+    }).join('');
+    return `<div style="border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:8px;background:var(--paper)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-size:12px;font-weight:600;color:var(--ink)">Ревизия от ${date}</span>
+        <button class="cdb-btn" onclick="applyRevision(${idx},${ri})">Применить</button>
+      </div>
+      ${fields}
+    </div>`;
+  }).join('');
+  // Show in viewer modal
+  document.getElementById('viewer-title').textContent='Ревизии: '+c.name;
+  document.getElementById('viewer-doc').innerHTML=`<div style="padding:0">${revHtml}</div>`;
+  document.getElementById('viewer-doc').style.padding='20px';
+  document.getElementById('viewer-overlay').classList.add('open');
+}
+
+function applyRevision(clientIdx,revIdx){
+  const db=loadClientsDB();
+  const rev=db[clientIdx]?.revisions?.[revIdx];if(!rev)return;
+  CL_FIELDS.forEach(f=>{const el=document.getElementById('cl-'+f);if(el)el.value=rev[f]||'';});
+  updateClientFormType();
+  liveUpdate();
+  closeViewer();
+  switchView('contract');
+  switchTab('client',document.getElementById('tab-client'));
+  showToast('Применены реквизиты из ревизии');
+}
+
+async function deleteClient(idx){
+  const db=loadClientsDB();
+  if(!confirm(`Удалить «${db[idx]?.name||''}»?`))return;
+  const removed=db.splice(idx,1)[0];
+  if(removed?.id) await apiDeleteClient(removed.id);
+  saveClientsDB(db);
+  renderClientsDB();
+  showToast('Контрагент удалён');
+}
+
+function renderClientsDB(){
+  const el=document.getElementById('clients-db-list');
+  const allDb=loadClientsDB();
+  const q=(document.getElementById('clients-search')?.value||'').toLowerCase().trim();
+  const filtered=allDb.map((c,i)=>({...c,_idx:i})).filter(c=>!q||(c.name||'').toLowerCase().includes(q)||(c.inn||'').includes(q));
+  if(!filtered.length){el.innerHTML=`<div class="cdb-empty">${q?'Ничего не найдено':'Нет сохранённых контрагентов.<br>Заполните данные заказчика и нажмите «Сохранить».'}</div>`;return;}
+  el.innerHTML=filtered.map(c=>{
+    const i=c._idx;
+    return `
+    <div class="cdb-card" onclick="applyClient(${i})">
+      <div class="cdb-name">${esc(c.name)}</div>
+      <div class="cdb-inn">${[c.inn?'ИНН '+c.inn:'',c.ogrn?'ОГРН '+c.ogrn:''].filter(Boolean).join(' · ')||'нет реквизитов'}</div>
+      ${c.addr?`<div style="font-size:11px;color:var(--slate);margin-top:2px">${esc(c.addr)}</div>`:''}
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+        <span style="font-size:10px;color:var(--slate)">${c.lastUpdated?'Обновлён '+new Date(c.lastUpdated).toLocaleDateString('ru-RU'):''}${c.revisions?.length?(' · '+c.revisions.length+' рев.'):''}</span>
+      </div>
+      <div class="cdb-actions" onclick="event.stopPropagation()">
+        <button class="cdb-btn" onclick="applyClient(${i})">Заполнить в договор</button>
+        ${c.revisions?.length?`<button class="cdb-btn" onclick="showRevisions(${i})">Ревизии (${c.revisions.length})</button>`:''}
+        <button class="cdb-btn del" onclick="deleteClient(${i})">Удалить</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── REGISTRY (localStorage) ──
+// ── REGISTRY (Supabase via API) ──
+let _registryCache = [];
+let _registryLoaded = false;
+
+function loadRegistry(){ return _registryCache; }
+function saveRegistry(arr){ _registryCache=arr; }
+
+async function fetchRegistry(){
+  try{
+    const res=await fetch('/api/turbodocs/registry');
+    const data=await res.json();
+    if(Array.isArray(data)) _registryCache=data;
+    _registryLoaded=true;
+  }catch(e){console.error('fetchRegistry',e);}
+  return _registryCache;
+}
+
+async function apiSaveRegistryEntry(entry){
+  if(entry.id){
+    await fetch('/api/turbodocs/registry',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(entry)});
+  } else {
+    const res=await fetch('/api/turbodocs/registry',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(entry)});
+    const saved=await res.json();
+    entry.id=saved.id;
+  }
+}
+
+async function apiDeleteRegistryEntry(id){
+  await fetch('/api/turbodocs/registry?id='+id,{method:'DELETE'});
+}
+
+async function addToRegistry(){
+  const num=g('t-num')||'б/н';
+  const date=g('t-date')||new Date().toISOString().slice(0,10);
+  const contractor=g('c-name')||'';
+  const client=g('cl-name')||'';
+  const docHtml=document.getElementById('doc-preview')?.innerHTML||'';
+  const parties={};
+  ['c-name','c-inn','c-ogrn','c-addr','c-postal','c-bank','c-bik','c-rs','c-ks','c-email','c-phone','c-signer','c-signer-gen','c-edo-op','c-edo-id'].forEach(f=>{parties[f]=g(f)||'';});
+  ['cl-name','cl-inn','cl-kpp','cl-ogrn','cl-addr','cl-postal','cl-bank','cl-bik','cl-rs','cl-ks','cl-email','cl-phone','cl-signer','cl-signer-gen','cl-basis','cl-edo-op','cl-edo-id'].forEach(f=>{parties[f]=g(f)||'';});
+  parties['t-vat']=g('t-vat')||'none';
+  const entry={num,date,contractor,client,html:docHtml,parties,specs:[],acts:[]};
+  await apiSaveRegistryEntry(entry);
+  const reg=loadRegistry();
+  reg.unshift(entry);
+  saveRegistry(reg);
+  renderRegistry();
+}
+
+let viewerIdx=null;
+let nsItems=[];
+
+function switchViewerTab(tab,btn){
+  document.querySelectorAll('.vtab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.vtab-panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('vtab-'+tab).classList.add('active');
+}
+
+function viewRegistryEntry(idx){
+  const reg=loadRegistry();
+  const r=reg[idx];if(!r)return;
+  viewerIdx=idx;
+  document.getElementById('viewer-title').textContent='Договор № '+r.num+' от '+(r.date||'').split('-').reverse().join('.');
+  // Contract tab
+  document.getElementById('viewer-doc').innerHTML=r.html||'<div style="padding:40px;text-align:center;color:var(--slate)">Договор сохранён без текста</div>';
+  // Reset to contract tab
+  switchViewerTab('contract',document.querySelectorAll('.vtab')[0]);
+  // Specs tab
+  renderViewerSpecs(r);
+  // Acts tab
+  renderViewerActs(r);
+  // Init new spec form
+  const nextSpecNum=r.specs?(r.specs.length+1):1;
+  document.getElementById('ns-num').value=nextSpecNum;
+  document.getElementById('ns-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('ns-days').value='14';
+  nsItems=[{name:'',article:'',unit:'шт.',qty:'',price:''}];
+  renderNsItems();
+  document.getElementById('viewer-overlay').classList.add('open');
+}
+
+function renderViewerSpecs(r){
+  const el=document.getElementById('viewer-specs-list');
+  if(!r.specs?.length){el.innerHTML='<div class="cdb-empty">Нет спецификаций</div>';return;}
+  el.innerHTML=r.specs.map((s,i)=>{
+    const d=s.date?(s.date.split('-').reverse().join('.')):'';
+    return `<div class="spec-card">
+      <div class="spec-card-hdr">
+        <span class="spec-card-num">Спецификация № ${esc(s.num)}</span>
+        <span class="spec-card-date">${d}</span>
+      </div>
+      <div class="spec-card-info">
+        ${s.items?.length||0} позиций · ${s.total?new Intl.NumberFormat('ru-RU').format(s.total)+' ₽':'—'} · ${s.days?s.days+' дн.':''}
+      </div>
+      <div class="cdb-actions" style="margin-top:8px">
+        <button class="cdb-btn" onclick="viewSpec(${i})" style="border-color:var(--gold);color:var(--gold)">Открыть</button>
+        <button class="cdb-btn" onclick="downloadSpec(${i})" style="border-color:var(--gold);color:var(--gold)">⬇ Скачать</button>
+        <button class="cdb-btn del" onclick="deleteSpec(${i})">Удалить</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderViewerActs(r){
+  const el=document.getElementById('viewer-acts-list');
+  // Fill spec selector
+  const specSel=document.getElementById('na-spec-idx');
+  if(specSel){
+    specSel.innerHTML=(r.specs||[]).map((s,i)=>`<option value="${i}">Спецификация № ${esc(s.num)} (${s.total?new Intl.NumberFormat('ru-RU').format(s.total)+' ₽':'—'})</option>`).join('');
+    if(!r.specs?.length) specSel.innerHTML='<option>Нет спецификаций</option>';
+  }
+  const dateEl=document.getElementById('na-date');
+  if(dateEl&&!dateEl.value) dateEl.value=new Date().toISOString().slice(0,10);
+  // Render acts
+  if(!r.acts?.length){el.innerHTML='<div class="cdb-empty">Нет актов. Сформируйте акт на основании спецификации.</div>';return;}
+  el.innerHTML=r.acts.map((a,i)=>{
+    const specLabel=a.spec?.num?'по Спецификации №'+a.spec.num:'';
+    return `<div class="spec-card">
+    <div class="spec-card-hdr">
+      <span class="spec-card-num">Акт № ${a.num} выполненных работ</span>
+      <span class="spec-card-date">${a.date?(a.date.split('-').reverse().join('.')):''}  </span>
+    </div>
+    <div class="spec-card-info">${specLabel}${a.spec?.total?' · '+new Intl.NumberFormat('ru-RU').format(a.spec.total)+' ₽':''}</div>
+    <div class="cdb-actions" style="margin-top:8px">
+      <button class="cdb-btn" onclick="viewAct(${i})" style="border-color:var(--gold);color:var(--gold)">Открыть</button>
+      <button class="cdb-btn" onclick="downloadAct(${i})" style="border-color:var(--gold);color:var(--gold)">⬇ Скачать</button>
+      <button class="cdb-btn del" onclick="deleteAct(${i})">Удалить</button>
+    </div>
+  </div>`;
+  }).join('');
+}
+
+// ── New Spec Items ──
+function addNsItem(){nsItems.push({name:'',article:'',unit:'шт.',qty:'',price:''});renderNsItems();}
+function removeNsItem(i){nsItems.splice(i,1);renderNsItems();}
+function renderNsItems(){
+  const el=document.getElementById('ns-items-list');
+  el.innerHTML=nsItems.map((it,i)=>`<div class="ns-row">
+    <input value="${esc(it.name)}" oninput="nsItems[${i}].name=this.value" placeholder="Наименование">
+    <input value="${esc(it.article||'')}" oninput="nsItems[${i}].article=this.value" placeholder="Артикул">
+    <select onchange="nsItems[${i}].unit=this.value">${['шт.','кг','м','услуга','компл.'].map(u=>`<option${it.unit===u?' selected':''}>${u}</option>`).join('')}</select>
+    <input type="number" value="${it.qty}" oninput="nsItems[${i}].qty=this.value" placeholder="Кол-во" style="text-align:center">
+    <input type="number" value="${it.price}" oninput="nsItems[${i}].price=this.value" placeholder="Цена" style="text-align:right">
+    <button class="del-row" onclick="removeNsItem(${i})" style="border:none;background:none;color:#bbb;cursor:pointer;font-size:14px">✕</button>
+  </div>`).join('');
+}
+
+function buildSpecHtml(r,spec){
+  const p=r.parties||{};
+  const cName=p['c-name']||r.contractor||'Исполнитель';
+  const clName=p['cl-name']||r.client||'Заказчик';
+  const cInn=p['c-inn']||'';const clInn=p['cl-inn']||'';
+  const cOgrn=p['c-ogrn']||'';const clOgrn=p['cl-ogrn']||'';
+  const cOL=cInn.replace(/\D/g,'').length===12?'ОГРНИП':'ОГРН';
+  const clOL=clInn.replace(/\D/g,'').length===12?'ОГРНИП':'ОГРН';
+  function specPartyIntro(name,inn,ol,ogrn,signer,signerGen,basis){
+    const base=`<strong>${esc(name)}</strong> ИНН ${inn||'___'} ${ol} ${ogrn||'___'}`;
+    if(inn.replace(/\D/g,'').length===10 && (signerGen||signer)){
+      const display=signerGen||normalizeSigner(signer);
+      return base+`, в лице ${esc(display)}, действующего на основании ${esc(normBasis(basis))}`;
+    }
+    return base;
+  }
+  const cSign=p['c-signer']||'';const clSign=p['cl-signer']||'';
+  function shortSig(s){const c=s.replace(/^индивидуальный\s+предприниматель\s+/i,'').trim();const pp=c.split(/\s+/);return pp.length>=2?pp[0]+' '+pp.slice(1).map(w=>w[0]+'.').join(''):c.slice(0,22);}
+  const cShort=shortSig(cSign||cName);const clShort=shortSig(clSign||clName);
+  const deliveryMap={'pickup':'самовывоз со склада Исполнителя','contractor':'силами Исполнителя (стоимость включена в цену)','client_pay':'силами Исполнителя за счёт Заказчика','transport':'транспортной компанией'};
+  const fmtNum=v=>{if(!v)return'—';return new Intl.NumberFormat('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v);};
+  let specTotal=0;
+  const rows=spec.items.filter(it=>it.name).map((it,i)=>{
+    const sum=(parseFloat(it.qty)||0)*(parseFloat(it.price)||0);specTotal+=sum;
+    return `<tr><td>${i+1}</td><td>${esc(it.name)}</td><td style="font-size:10px">${esc(it.article||'')}</td><td style="text-align:center">${esc(it.unit||'шт.')}</td><td style="text-align:center">${it.qty||'—'}</td><td style="text-align:right">${it.price?fmtNum(parseFloat(it.price)):'—'}</td><td style="text-align:right;font-weight:500">${sum>0?fmtNum(sum):'—'}</td></tr>`;
+  }).join('');
+  const vat=p['t-vat']||'none';
+  const vatNote=vat==='20'?`В т.ч. НДС 20%: ${fmtNum(specTotal*20/120)} руб.`:vat==='5'?`В т.ч. НДС 5%: ${fmtNum(specTotal*5/105)} руб.`:'Без НДС (УСН)';
+  const fmtD=d=>{if(!d)return'';const[y,m,dd]=d.split('-');const mn=['','января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];return `«${parseInt(dd)}» ${mn[parseInt(m)]} ${y} г.`;};
+  const docNum=r.num||'';
+  return `<div style="margin-bottom:10px"><span style="display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:9px;background:#111;color:white;padding:2px 7px;border-radius:10px;margin-bottom:11px;letter-spacing:.05em">ПРИЛОЖЕНИЕ № 1</span>
+  <div style="float:right;text-align:right"><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#111;font-weight:600">Спецификация № ${esc(spec.num)}</div><div style="font-size:10px;color:#333;margin-top:3px">к Договору № ${esc(docNum)} от ${spec.date?spec.date.split('-').reverse().join('.'):(r.date||'').split('-').reverse().join('.')}</div></div><div style="clear:both"></div></div>
+  <div style="font-size:11px;line-height:1.8;margin-bottom:14px">Россия, Кировская область, г. Киров, ${fmtD(spec.date||r.date)}</div>
+  <div style="background:#f9f7f2;border-left:4px solid #b8943a;padding:14px 18px;margin-bottom:16px;font-size:11.5px;line-height:1.9;border-radius:0 4px 4px 0">
+  ${specPartyIntro(cName,cInn,cOL,cOgrn,cSign,p['c-signer-gen'],'')}, именуем${cInn.replace(/\D/g,'').length===10?'ое':'ый(-ая)'} далее «Исполнитель», с одной стороны, и
+  ${specPartyIntro(clName,clInn,clOL,clOgrn,clSign,p['cl-signer-gen'],p['cl-basis'])}, именуем${clInn.replace(/\D/g,'').length===10?'ое':'ый(-ая)'} далее «Заказчик», с другой стороны, согласовали оказание услуг на следующих условиях:</div>
+  ${spec.tzImage?'<div style="margin:14px 0;text-align:center"><div style="font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#666;margin-bottom:8px">Техническое задание</div><img src="'+spec.tzImage+'" style="max-width:100%;border:1px solid #ddd;border-radius:4px"></div>':''}
+  <div style="font-size:11px;font-weight:600;color:#111;margin:12px 0 6px">Исполнитель обязуется оказать услуги пошива / поставки Заказчику:</div>
+  <table class="doc-table"><thead><tr><th style="width:4%">№</th><th style="width:30%">Наименование</th><th style="width:12%">Артикул</th><th style="width:6%">Ед.</th><th style="width:8%">Кол-во</th><th style="width:18%">Цена, руб.</th><th style="width:22%">Сумма, руб.</th></tr></thead><tbody>${rows}</tbody><tfoot><tr class="total-row"><td colspan="6" style="text-align:right">Итого:</td><td style="text-align:right">${fmtNum(specTotal)}</td></tr></tfoot></table>
+  <p style="font-size:10.5px;color:#52637a;margin-top:4px">${vatNote}</p>
+  <div style="font-size:11.5px;margin-top:12px;line-height:1.9"><p><strong>Срок оказания услуг/поставки:</strong> ${spec.days||'______'} рабочих дней с момента поступления предоплаты</p><p><strong>Способ доставки:</strong> ${deliveryMap[spec.delivery]||spec.delivery||'—'}</p></div>
+  <div style="font-size:10.5px;color:var(--slate);margin:14px 0 20px;line-height:1.7">Настоящая Спецификация составлена в двух экземплярах, имеющих равную юридическую силу, является неотъемлемой частью Договора поставки и оказания услуг № ${esc(docNum)} от ${(r.date||'').split('-').reverse().join('.')}.</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:20px;padding-top:11px;border-top:1px solid #ccc">
+  <div><div style="font-size:8.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#111;margin-bottom:6px">ИСПОЛНИТЕЛЬ</div>
+  <div style="font-size:11.5px;font-weight:600;color:#111">${esc(cName)}</div>
+  <div style="font-size:9.5px;color:#333;line-height:1.7;margin-top:4px">${cInn?'ИНН '+cInn:''}${p['c-kpp']?' КПП '+p['c-kpp']:''}${cOgrn?'<br>'+cOL+' '+cOgrn:''}</div>
+  ${p['c-addr']?'<div style="font-size:9.5px;color:#333;line-height:1.7">'+esc(p['c-addr'])+'</div>':''}
+  ${p['c-bank']?'<div style="font-size:9.5px;color:#333;line-height:1.7;margin-top:3px">р/с '+(p['c-rs']||'___')+'<br>'+(p['c-bank']||'')+', БИК '+(p['c-bik']||'___')+'<br>к/с '+(p['c-ks']||'___')+'</div>':''}
+  <div style="border-bottom:1px solid #111;margin:18px 0 5px;height:24px"></div><div style="font-size:9px;color:#333">${cShort} / _________________ /</div></div>
+  <div><div style="font-size:8.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#111;margin-bottom:6px">ЗАКАЗЧИК</div>
+  <div style="font-size:11.5px;font-weight:600;color:#111">${esc(clName)}</div>
+  <div style="font-size:9.5px;color:#333;line-height:1.7;margin-top:4px">${clInn?'ИНН '+clInn:''}${p['cl-kpp']?' КПП '+p['cl-kpp']:''}${clOgrn?'<br>'+clOL+' '+clOgrn:''}</div>
+  ${p['cl-addr']?'<div style="font-size:9.5px;color:#333;line-height:1.7">'+esc(p['cl-addr'])+'</div>':''}
+  ${p['cl-bank']?'<div style="font-size:9.5px;color:#333;line-height:1.7;margin-top:3px">р/с '+(p['cl-rs']||'___')+'<br>'+(p['cl-bank']||'')+', БИК '+(p['cl-bik']||'___')+'<br>к/с '+(p['cl-ks']||'___')+'</div>':''}
+  <div style="border-bottom:1px solid #111;margin:18px 0 5px;height:24px"></div><div style="font-size:9px;color:#333">${clShort} / _________________ /</div></div></div>`;
+}
+
+async function loadTzImage(input){
+  const file=input.files?.[0];if(!file)return;
+  // Show local preview immediately
+  const localUrl=URL.createObjectURL(file);
+  document.getElementById('ns-tz-img').src=localUrl;
+  document.getElementById('ns-tz-preview').style.display='block';
+  // Upload to Supabase Storage
+  const fd=new FormData();
+  fd.append('file',file);
+  try{
+    const res=await fetch('/api/turbodocs/upload',{method:'POST',body:fd});
+    const data=await res.json();
+    if(data.url){
+      document.getElementById('ns-tz-img').src=data.url;
+      document.getElementById('ns-tz-img').dataset.url=data.url;
+    } else {
+      showToast('Ошибка загрузки: '+(data.error||''));
+    }
+  }catch(e){
+    showToast('Ошибка загрузки изображения');
+  }
+}
+
+function clearTzImage(){
+  const img=document.getElementById('ns-tz-img');
+  img.src='';img.dataset.url='';
+  document.getElementById('ns-tz-preview').style.display='none';
+  document.getElementById('ns-tz-file').value='';
+}
+
+async function generateNewSpec(){
+  if(viewerIdx===null)return;
+  const reg=loadRegistry();
+  const r=reg[viewerIdx];if(!r)return;
+  const specItems=nsItems.filter(it=>it.name).map(it=>({...it}));
+  if(!specItems.length){showToast('Добавьте хотя бы одну позицию');return;}
+  let total=0;specItems.forEach(it=>{total+=(parseFloat(it.qty)||0)*(parseFloat(it.price)||0);});
+  const tzEl=document.getElementById('ns-tz-img');
+  const tzUrl=tzEl?.dataset?.url||'';
+  const spec={
+    num:document.getElementById('ns-num').value||String((r.specs?.length||0)+1),
+    date:document.getElementById('ns-date').value||new Date().toISOString().slice(0,10),
+    days:document.getElementById('ns-days').value||'',
+    delivery:document.getElementById('ns-delivery').value||'pickup',
+    items:specItems,total,
+    tzImage:tzUrl,
+    createdAt:new Date().toISOString()
+  };
+  if(!r.specs) r.specs=[];
+  r.specs.push(spec);
+  saveRegistry(reg);
+  await apiSaveRegistryEntry(r);
+  renderViewerSpecs(r);
+  // Reset form
+  nsItems=[{name:'',article:'',unit:'шт.',qty:'',price:''}];renderNsItems();
+  document.getElementById('ns-num').value=r.specs.length+1;
+  clearTzImage();
+  showToast('Спецификация №'+spec.num+' добавлена');
+}
+
+function viewSpec(specIdx){
+  if(viewerIdx===null)return;
+  const reg=loadRegistry();const r=reg[viewerIdx];if(!r||!r.specs?.[specIdx])return;
+  const html=buildSpecHtml(r,r.specs[specIdx]);
+  document.getElementById('viewer-doc').innerHTML=html;
+  switchViewerTab('contract',document.querySelectorAll('.vtab')[0]);
+  document.getElementById('viewer-title').textContent='Спецификация №'+r.specs[specIdx].num+' к Договору №'+r.num;
+}
+
+function downloadSpec(specIdx){
+  if(viewerIdx===null)return;
+  const reg=loadRegistry();const r=reg[viewerIdx];if(!r||!r.specs?.[specIdx])return;
+  const html=buildSpecHtml(r,r.specs[specIdx]);
+  const fullHtml=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Спецификация №${r.specs[specIdx].num}</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>@page{size:A4;margin:14mm 17mm 16mm 17mm;}*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'IBM Plex Sans',sans-serif;font-size:9.5pt;color:#111;line-height:1.78;padding:0 17mm;}
+.doc-table{width:100%;border-collapse:collapse;font-size:8pt;margin:5px 0;}.doc-table th{background:#f0ece4;font-weight:600;text-transform:uppercase;letter-spacing:.04em;font-size:7pt;padding:4px 5px;border:1px solid #ccc;color:#52637a;text-align:left;}.doc-table td{border:1px solid #ccc;padding:4px 5px;font-size:8.5pt;}.doc-table tr:nth-child(even) td{background:#faf8f4;}.doc-table .total-row td{font-weight:600;background:#f5f1e8;}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style></head><body>
+${html}
+<script>window.addEventListener('load',function(){setTimeout(function(){window.print();},800)});<\/script></body></html>`;
+  const blob=new Blob([fullHtml],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;
+  a.download='Спецификация_'+r.specs[specIdx].num+'_к_договору_'+r.num+'.html';
+  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},1000);
+  showToast('Спецификация скачана');
+}
+
+async function deleteSpec(specIdx){
+  if(viewerIdx===null)return;
+  const reg=loadRegistry();const r=reg[viewerIdx];if(!r)return;
+  if(!confirm('Удалить спецификацию №'+(r.specs[specIdx]?.num||'')+'?'))return;
+  r.specs.splice(specIdx,1);
+  saveRegistry(reg);
+  await apiSaveRegistryEntry(r);
+  renderViewerSpecs(r);
+  showToast('Спецификация удалена');
+}
+
+function buildActHtml(r,act){
+  const p=r.parties||{};
+  const cName=p['c-name']||r.contractor||'Исполнитель';
+  const clName=p['cl-name']||r.client||'Заказчик';
+  const cInn=p['c-inn']||'';const clInn=p['cl-inn']||'';
+  const cOgrn=p['c-ogrn']||'';const clOgrn=p['cl-ogrn']||'';
+  const cOL=cInn.replace(/\D/g,'').length===12?'ОГРНИП':'ОГРН';
+  const clOL=clInn.replace(/\D/g,'').length===12?'ОГРНИП':'ОГРН';
+  function actPartyIntro(name,inn,ol,ogrn,signer,signerGen,basis){
+    const base=`<strong>${esc(name)}</strong>, ИНН ${inn} ${ol} ${ogrn}`;
+    if(inn.replace(/\D/g,'').length===10 && (signerGen||signer)){
+      const display=signerGen||normalizeSigner(signer);
+      return base+`, в лице ${esc(display)}, действующего на основании ${esc(normBasis(basis))}`;
+    }
+    return base;
+  }
+  const cSign=p['c-signer']||cName;const clSign=p['cl-signer']||clName;
+  function shortSig(s){const c=s.replace(/^индивидуальный\s+предприниматель\s+/i,'').trim();const pp=c.split(/\s+/);return pp.length>=2?pp[0]+' '+pp.slice(1).map(w=>w[0]+'.').join(''):c.slice(0,22);}
+  const cShort=shortSig(cSign);const clShort=shortSig(clSign);
+  const fmtNum=v=>{if(!v)return'—';return new Intl.NumberFormat('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2}).format(v);};
+  const fmtD=d=>{if(!d)return'';const[y,m,dd]=d.split('-');const mn=['','января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];return `«${parseInt(dd)}» ${mn[parseInt(m)]} ${y} г.`;};
+  const docNum=r.num||'';
+  const spec=act.spec||{};
+  const specNum=spec.num||'';
+  let specTotal=0;
+  const rows=(spec.items||[]).filter(it=>it.name).map((it,i)=>{
+    const sum=(parseFloat(it.qty)||0)*(parseFloat(it.price)||0);specTotal+=sum;
+    return `<tr><td>${i+1}</td><td>${esc(it.name)}</td>${it.article?`<td style="font-size:10px">${esc(it.article)}</td>`:'<td></td>'}<td style="text-align:center">${esc(it.unit||'шт.')}</td><td style="text-align:center">${it.qty||'—'}</td><td style="text-align:right">${it.price?fmtNum(parseFloat(it.price)):'—'}</td><td style="text-align:right;font-weight:500">${sum>0?fmtNum(sum):'—'}</td></tr>`;
+  }).join('');
+  const vat=p['t-vat']||'none';
+  const vatNote=vat==='20'?`В т.ч. НДС 20%: ${fmtNum(specTotal*20/120)} руб.`:vat==='5'?`В т.ч. НДС 5%: ${fmtNum(specTotal*5/105)} руб.`:'Без НДС (УСН)';
+
+  return `
+  <div style="text-align:center;margin-bottom:20px">
+    <div style="font-size:15px;font-weight:700;color:#111;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Акт № ${esc(String(act.num))} выполненных работ / оказанных услуг</div>
+    <div style="font-size:11px;color:#333">к Договору № ${esc(docNum)} от ${(r.date||'').split('-').reverse().join('.')}</div>
+    ${specNum?`<div style="font-size:11px;color:#333">по Спецификации № ${esc(specNum)}</div>`:''}
+    <div style="font-size:11px;color:#333;margin-top:6px">Россия, Кировская область, г. Киров, ${fmtD(act.date)}</div>
+  </div>
+
+  <div style="font-size:11.5px;line-height:1.9;margin-bottom:16px">
+    ${actPartyIntro(cName,cInn,cOL,cOgrn,p['c-signer'],p['c-signer-gen'],'')}, именуем${cInn.replace(/\D/g,'').length===10?'ое':'ый(-ая)'} далее «Исполнитель», с одной стороны, и
+    ${actPartyIntro(clName,clInn,clOL,clOgrn,p['cl-signer'],p['cl-signer-gen'],p['cl-basis'])}, именуем${clInn.replace(/\D/g,'').length===10?'ое':'ый(-ая)'} далее «Заказчик», с другой стороны,
+    составили настоящий Акт о нижеследующем:
+  </div>
+
+  <div style="font-size:11.5px;line-height:1.9;margin-bottom:14px">
+    <p><strong>1.</strong> Исполнитель выполнил, а Заказчик принял следующие работы / услуги:</p>
+  </div>
+
+  <table class="doc-table"><thead><tr>
+    <th style="width:4%">№</th><th style="width:28%">Наименование</th><th style="width:12%">Артикул</th><th style="width:6%">Ед.</th><th style="width:8%">Кол-во</th><th style="width:18%">Цена, руб.</th><th style="width:22%">Сумма, руб.</th>
+  </tr></thead><tbody>${rows}</tbody><tfoot>
+    <tr class="total-row"><td colspan="6" style="text-align:right">Итого:</td><td style="text-align:right">${fmtNum(specTotal)}</td></tr>
+  </tfoot></table>
+  <p style="font-size:10.5px;color:#52637a;margin-top:4px">${vatNote}</p>
+
+  <div style="font-size:11.5px;line-height:1.9;margin-top:16px">
+    <p><strong>2.</strong> Вышеперечисленные работы выполнены в полном объёме, в установленные сроки и в соответствии с условиями Договора № ${esc(docNum)}${specNum?' и Спецификации № '+esc(specNum):''}.</p>
+    <p><strong>3.</strong> Заказчик претензий по объёму, качеству и срокам выполнения работ не имеет.</p>
+    <p><strong>4.</strong> Общая стоимость выполненных работ составляет: <strong>${fmtNum(specTotal)} руб.</strong> ${vatNote}.</p>
+    <p><strong>5.</strong> Настоящий Акт составлен в двух экземплярах, имеющих равную юридическую силу, по одному для каждой из Сторон.</p>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:30px;padding-top:14px;border-top:1px solid #ccc">
+    <div>
+      <div style="font-size:8.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#111;margin-bottom:6px">ИСПОЛНИТЕЛЬ</div>
+      <div style="font-size:11.5px;font-weight:600;color:#111;margin-bottom:2px">${esc(cName)}</div>
+      <div style="border-bottom:1px solid #111;margin:18px 0 5px;height:24px"></div>
+      <div style="font-size:9px;color:#333">${cShort} / _________________ /</div>
+    </div>
+    <div>
+      <div style="font-size:8.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#111;margin-bottom:6px">ЗАКАЗЧИК</div>
+      <div style="font-size:11.5px;font-weight:600;color:#111;margin-bottom:2px">${esc(clName)}</div>
+      <div style="border-bottom:1px solid #111;margin:18px 0 5px;height:24px"></div>
+      <div style="font-size:9px;color:#333">${clShort} / _________________ /</div>
+    </div>
+  </div>`;
+}
+
+async function generateNewAct(){
+  if(viewerIdx===null)return;
+  const reg=loadRegistry();const r=reg[viewerIdx];if(!r)return;
+  const specIdx=parseInt(document.getElementById('na-spec-idx')?.value);
+  if(isNaN(specIdx)||!r.specs?.[specIdx]){showToast('Выберите спецификацию');return;}
+  const spec=r.specs[specIdx];
+  const actNum=(r.acts?.length||0)+1;
+  const date=document.getElementById('na-date')?.value||new Date().toISOString().slice(0,10);
+  if(!r.acts)r.acts=[];
+  const act={num:actNum,date,specIdx,spec:{...spec},createdAt:new Date().toISOString()};
+  r.acts.push(act);
+  saveRegistry(reg);
+  await apiSaveRegistryEntry(r);
+  renderViewerActs(r);
+  showToast('Акт №'+actNum+' сформирован');
+}
+
+function viewAct(actIdx){
+  if(viewerIdx===null)return;
+  const reg=loadRegistry();const r=reg[viewerIdx];if(!r||!r.acts?.[actIdx])return;
+  const html=buildActHtml(r,r.acts[actIdx]);
+  document.getElementById('viewer-doc').innerHTML=html;
+  switchViewerTab('contract',document.querySelectorAll('.vtab')[0]);
+  document.getElementById('viewer-title').textContent='Акт №'+r.acts[actIdx].num+' к Договору №'+r.num;
+}
+
+function downloadAct(actIdx){
+  if(viewerIdx===null)return;
+  const reg=loadRegistry();const r=reg[viewerIdx];if(!r||!r.acts?.[actIdx])return;
+  const act=r.acts[actIdx];
+  const html=buildActHtml(r,act);
+  const fullHtml=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Акт №${act.num}</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>@page{size:A4;margin:14mm 17mm 16mm 17mm;}*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'IBM Plex Sans',sans-serif;font-size:9.5pt;color:#111;line-height:1.78;padding:0 17mm;}
+.doc-table{width:100%;border-collapse:collapse;font-size:8pt;margin:5px 0;}.doc-table th{background:#f0ece4;font-weight:600;text-transform:uppercase;letter-spacing:.04em;font-size:7pt;padding:4px 5px;border:1px solid #ccc;color:#52637a;text-align:left;}.doc-table td{border:1px solid #ccc;padding:4px 5px;font-size:8.5pt;}.doc-table tr:nth-child(even) td{background:#faf8f4;}.doc-table .total-row td{font-weight:600;background:#f5f1e8;}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style></head><body>
+${html}
+<script>window.addEventListener('load',function(){setTimeout(function(){window.print();},800)});<\/script></body></html>`;
+  const blob=new Blob([fullHtml],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;
+  a.download='Акт_'+act.num+'_к_договору_'+r.num+'.html';
+  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},1000);
+  showToast('Акт скачан');
+}
+
+async function deleteAct(actIdx){
+  if(viewerIdx===null)return;
+  const reg=loadRegistry();const r=reg[viewerIdx];if(!r)return;
+  if(!confirm('Удалить акт №'+(r.acts[actIdx]?.num||'')+'?'))return;
+  r.acts.splice(actIdx,1);saveRegistry(reg);
+  await apiSaveRegistryEntry(r);
+  renderViewerActs(r);
+  showToast('Акт удалён');
+}
+
+function closeViewer(){
+  viewerIdx=null;
+  document.getElementById('viewer-overlay').classList.remove('open');
+  document.getElementById('viewer-doc').innerHTML='';
+}
+function downloadFromViewer(){
+  if(viewerIdx===null)return;
+  const reg=loadRegistry();
+  const r=reg[viewerIdx];if(!r||!r.html)return;
+  // Temporarily fill form fields from registry entry, call downloadDoc-like logic
+  // Simpler: build a standalone HTML from the saved preview HTML + inline styles
+  const docNum=r.num||'б-н';
+  const contractor=r.contractor||'Исполнитель';
+  const client=r.client||'Заказчик';
+  const body=r.html;
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>Договор № ${esc(docNum)}</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+@page{size:A4;margin:14mm 17mm 14mm 17mm;}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'IBM Plex Sans',sans-serif;font-size:9.5pt;color:#111;line-height:1.78;}
+.dh{display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:2.5px solid #b8943a;margin-bottom:16px;}
+.dh-left{max-width:50%;} .dh-right{text-align:right;max-width:50%;}
+.co-name{font-family:'IBM Plex Sans',sans-serif;font-size:10pt;font-weight:700;color:#111;}
+.co-det{font-size:7.5pt;color:#111;line-height:1.55;}
+.dt{font-family:'IBM Plex Sans',sans-serif;font-size:11pt;font-weight:700;color:#111;display:block;text-align:right;text-transform:uppercase;letter-spacing:0.3px;}
+.dn{font-family:'IBM Plex Mono',monospace;font-size:9.5pt;color:#111;text-align:right;}
+.dd{font-size:8pt;color:#111;text-align:right;margin-top:2px;}
+.gr{height:2px;background:#b8943a;margin:0 0 16px;}
+.pb{background:#f9f7f2;border-left:4px solid #b8943a;padding:9px 13px;margin-bottom:13px;font-size:9pt;line-height:1.85;}
+.pb strong{color:#111;}
+.ds{margin-bottom:12px;page-break-inside:auto;}
+.ds-title{font-family:'IBM Plex Sans',sans-serif;font-size:9pt;font-weight:600;color:#111;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;display:flex;align-items:center;gap:6px;page-break-after:avoid;}
+.num{font-family:'IBM Plex Mono',monospace;font-size:7.5pt;background:#111;color:white;width:14px;height:14px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:500;}
+.ds-body{font-size:9pt;padding-left:20px;line-height:1.8;page-break-inside:auto;}
+.ds-body p{margin-bottom:3px;orphans:2;widows:2;}
+.val,.plain-val{font-family:inherit;font-size:inherit;background:none!important;border:none!important;padding:0!important;color:inherit!important;font-weight:600;}
+.doc-table{width:100%;border-collapse:collapse;font-size:8pt;margin:5px 0;}
+.doc-table th{background:#f0ece4;font-weight:600;text-transform:uppercase;letter-spacing:.04em;font-size:7pt;padding:4px 5px;border:1px solid #ccc;color:#52637a;text-align:left;}
+.doc-table td{border:1px solid #ccc;padding:4px 5px;font-size:8.5pt;}
+.doc-table tr:nth-child(even) td{background:#faf8f4;}
+.doc-table .total-row td{font-weight:600;background:#f5f1e8;}
+.sigs{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px;padding-top:11px;border-top:1px solid #ccc;}
+.s-lbl{font-size:6.5pt;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#111;margin-bottom:4px;}
+.s-name{font-size:9.5pt;font-weight:600;color:#111;margin-bottom:2px;}
+.s-det{font-size:7.5pt;color:#333;line-height:1.65;}
+.s-line{border-bottom:1px solid #111;margin:14px 0 4px;height:16px;}
+.s-cap{font-size:7.5pt;color:#333;}
+hr.page-break{page-break-before:always;border:none;margin:0;display:block;}
+.page-break{page-break-before:always;}
+.sig-page-break{page-break-before:always;}
+.stamp,.doc::before,button{display:none!important;}
+.appendix-badge{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:7.5pt;background:#111;color:white;padding:2px 7px;border-radius:10px;margin-bottom:11px;letter-spacing:.05em;}
+.spec-title{font-size:9.5pt;font-weight:600;color:#111;margin:9px 0 4px;}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+</style></head><body>
+${body}
+<script>window.addEventListener('load',function(){setTimeout(function(){window.print();},800)});<\/script>
+</body></html>`;
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='Договор_'+docNum.replace(/\//g,'-')+'.html';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},1000);
+  showToast('📄 Файл скачан — откройте для печати в PDF');
+}
+
+async function deleteRegistryEntry(idx){
+  const reg=loadRegistry();
+  if(!confirm(`Удалить договор №${reg[idx]?.num||''}?`))return;
+  const removed=reg.splice(idx,1)[0];
+  if(removed?.id) await apiDeleteRegistryEntry(removed.id);
+  saveRegistry(reg);
+  renderRegistry();
+}
+
+function renderRegistry(){
+  const el=document.getElementById('registry-list');
+  const allReg=loadRegistry();
+  const q=(document.getElementById('registry-search')?.value||'').toLowerCase().trim();
+  const filtered=allReg.map((r,i)=>({...r,_idx:i})).filter(r=>!q||(r.num||'').toLowerCase().includes(q)||(r.client||'').toLowerCase().includes(q)||(r.contractor||'').toLowerCase().includes(q));
+  if(!filtered.length){el.innerHTML=`<div class="cdb-empty">${q?'Ничего не найдено':'Реестр пуст.<br>Договоры добавляются автоматически при формировании.'}</div>`;return;}
+  el.innerHTML=filtered.map(r=>{
+    const i=r._idx;
+    const d=r.date?r.date.split('-').reverse().join('.'):'';
+    return `
+    <div class="reg-card">
+      <div class="reg-top">
+        <span class="reg-num">№ ${esc(r.num)}</span>
+        <span class="reg-date">${d}</span>
+      </div>
+      <div class="reg-parties">
+        <strong>${esc(r.contractor||'—')}</strong> → ${esc(r.client||'—')}
+      </div>
+      <div style="font-size:11px;color:var(--slate);margin-top:2px">${r.specs?.length?r.specs.length+' спец.':'нет спец.'} · ${r.acts?.length?r.acts.length+' акт(ов)':'нет актов'}</div>
+      <div class="cdb-actions" style="margin-top:6px">
+        ${r.html?`<button class="cdb-btn" onclick="viewRegistryEntry(${i})" style="border-color:var(--gold);color:var(--gold)">Открыть</button>`:`<span style="font-size:10px;color:var(--slate)">без текста</span>`}
+        <button class="cdb-btn del" onclick="deleteRegistryEntry(${i})">Удалить</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── AUTO NUMBER ──
+function getNextContractNum(){
+  const reg=loadRegistry();
+  if(!reg.length) return '1-01';
+  // Find highest number in format X-YY or X-Y
+  let maxPrefix=0, maxSuffix=0;
+  reg.forEach(r=>{
+    const m=(r.num||'').match(/^(\d+)-(\d+)$/);
+    if(m){
+      const p=parseInt(m[1]),s=parseInt(m[2]);
+      if(p>maxPrefix||(p===maxPrefix&&s>maxSuffix)){maxPrefix=p;maxSuffix=s;}
+    }
+  });
+  if(maxPrefix===0&&maxSuffix===0) return '1-01';
+  return maxPrefix+'-'+String(maxSuffix+1).padStart(2,'0');
+}
+
+// ── INIT ──
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSettings();closeViewer();}});
+document.getElementById('t-date').value = new Date().toISOString().split('T')[0];
+document.getElementById('s-date').value = new Date().toISOString().split('T')[0];
+addItem('','шт.','','');
+
+(async function(){
+  const profiles = loadProfiles();
+  if(profiles.length === 0){
+    saveProfiles([PROFILE_TIKHANOV, PROFILE_SLAUTIN]);
+    setActiveIdx(1);
+    applyMyData(PROFILE_SLAUTIN);
+  } else {
+    applyMyData(profiles[getActiveIdx()] || profiles[0]);
+  }
+  updateSettingsBtn();
+  // Load from Supabase
+  await Promise.all([fetchClientsDB(), fetchRegistry()]);
+  renderClientsDB();
+  renderRegistry();
+  document.getElementById('t-num').value = getNextContractNum();
+})();
+</script>
+
+<!-- PICKER MODAL -->
+<div id="cl-picker-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9000;align-items:center;justify-content:center" onclick="if(event.target===this)closeClientPicker()">
+  <div style="background:var(--panel-bg);border:1px solid var(--border);border-radius:16px;width:min(480px,94vw);max-height:80vh;display:flex;flex-direction:column;box-shadow:0 12px 48px rgba(0,0,0,.4)">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+      <span style="font-size:14px;font-weight:700;color:var(--ink);flex:1">Выбрать контрагента</span>
+      <button onclick="closeClientPicker()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--slate);line-height:1;padding:0">✕</button>
+    </div>
+    <div style="padding:12px 16px;border-bottom:1px solid var(--border)">
+      <input id="cl-picker-search" type="text" placeholder="Поиск по названию или ИНН..." oninput="renderClientPicker()"
+        style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid var(--input-border);background:var(--input-bg);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;font-size:13px;border-radius:8px;outline:none">
+    </div>
+    <div id="cl-picker-list" style="overflow-y:auto;padding:8px"></div>
+  </div>
+</div>
+
+<script>
+function openClientPicker(){
+  const overlay=document.getElementById('cl-picker-overlay');
+  overlay.style.display='flex';
+  document.getElementById('cl-picker-search').value='';
+  renderClientPicker();
+  setTimeout(()=>document.getElementById('cl-picker-search').focus(),50);
+}
+
+function closeClientPicker(){
+  document.getElementById('cl-picker-overlay').style.display='none';
+}
+
+function renderClientPicker(){
+  const q=(document.getElementById('cl-picker-search').value||'').toLowerCase().trim();
+  const db=loadClientsDB();
+  const list=document.getElementById('cl-picker-list');
+  const filtered=q?db.filter(c=>(c.name||'').toLowerCase().includes(q)||(c.inn||'').includes(q)):db;
+  if(!filtered.length){
+    list.innerHTML=`<div style="padding:24px;text-align:center;color:var(--slate);font-size:13px">${q?'Ничего не найдено':'Нет сохранённых контрагентов'}</div>`;
+    return;
+  }
+  list.innerHTML=filtered.map((c,i)=>{
+    const idx=db.indexOf(c);
+    return `<div onclick="pickClient(${idx})" style="padding:12px 14px;border-radius:10px;cursor:pointer;transition:background .15s;border:1px solid transparent;margin-bottom:4px" onmouseover="this.style.background='var(--gold-bg)';this.style.borderColor='var(--gold-lt)'" onmouseout="this.style.background='';this.style.borderColor='transparent'">
+      <div style="font-size:13px;font-weight:600;color:var(--ink)">${esc(c.name||'—')}</div>
+      <div style="font-size:11px;color:var(--slate);margin-top:2px">${c.inn?'ИНН '+esc(c.inn):''}${c.inn&&c.addr?' · ':''}${c.addr?esc(c.addr.slice(0,60))+(c.addr.length>60?'…':''):''}</div>
+    </div>`;
+  }).join('');
+}
+
+function pickClient(idx){
+  applyClient(idx);
+  closeClientPicker();
+}
+
+// Close on Escape
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeClientPicker();});
+</script>
+</body>
+</html>

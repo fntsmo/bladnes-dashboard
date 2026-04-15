@@ -3,9 +3,110 @@
   padding: 0;
   box-sizing: border-box;
 }
+
+:root {
+  --bg: #18181C;
+  --surface: #1E1E24;
+  --surface2: #222228;
+  --ink: #E8E6E1;
+  --ink2: #DAD8D2;
+  --muted: #7A7880;
+  --muted2: #4A484E;
+  --line: rgba(255,255,255,0.06);
+  --line2: rgba(255,255,255,0.07);
+  --gold: #C9A96E;
+  --gold-bg: rgba(201,169,110,0.08);
+  --gold-border: rgba(201,169,110,0.3);
+  --hover: rgba(255,255,255,0.04);
+  --subtle: rgba(255,255,255,0.02);
+  --green: #66BB6A;
+  --red: #EF5350;
+  --cyan: #64B5F6;
+  --purple: #CE93D8;
+}
+
+[data-theme="light"] {
+  --bg: #f0ede7;
+  --surface: #ffffff;
+  --surface2: #f7f5f0;
+  --ink: #1a1a1a;
+  --ink2: #333333;
+  --muted: #6b7280;
+  --muted2: #9ca3af;
+  --line: #e5e2dc;
+  --line2: #d1cdc4;
+  --gold: #9a7b3f;
+  --gold-bg: rgba(154,123,63,0.06);
+  --gold-border: rgba(154,123,63,0.25);
+  --hover: rgba(0,0,0,0.04);
+  --subtle: rgba(0,0,0,0.04);
+  --green: #16a34a;
+  --red: #dc2626;
+  --cyan: #2563eb;
+  --purple: #7c3aed;
+}
+
 body {
-  background: #18181C;
-  color: #E8E6E1;
+  background: var(--bg);
+  color: var(--ink);
   font-family: 'IBM Plex Sans', sans-serif;
   -webkit-font-smoothing: antialiased;
+  transition: background 0.2s, color 0.2s;
 }
+
+/* ══════════════════════════════════════
+   LIGHT THEME — refined palette overrides
+   ══════════════════════════════════════ */
+
+/* Inputs & textareas with dark bg */
+[data-theme="light"] input,
+[data-theme="light"] textarea,
+[data-theme="light"] select {
+  background: var(--surface) !important;
+  color: var(--ink) !important;
+  border-color: var(--line2) !important;
+}
+[data-theme="light"] input:focus,
+[data-theme="light"] textarea:focus,
+[data-theme="light"] select:focus {
+  border-color: var(--gold) !important;
+  box-shadow: 0 0 0 3px rgba(154,123,63,0.1) !important;
+}
+[data-theme="light"] input::placeholder {
+  color: var(--muted2) !important;
+}
+
+/* Buttons with transparent bg + rgba borders */
+[data-theme="light"] button {
+  color: var(--ink);
+}
+
+/* Tables */
+[data-theme="light"] table {
+  color: var(--ink);
+}
+[data-theme="light"] th {
+  background: var(--surface2) !important;
+  color: var(--muted) !important;
+  border-color: var(--line2) !important;
+}
+[data-theme="light"] td {
+  border-color: var(--line) !important;
+}
+
+/* Modal overlays */
+[data-theme="light"] div[style*="background:rgba(0,0,0,0.7)"] {
+  background: rgba(0,0,0,0.3) !important;
+}
+
+/* Recharts — ticks and grid for light */
+[data-theme="light"] .recharts-cartesian-grid line {
+  stroke: var(--line) !important;
+}
+[data-theme="light"] .recharts-text {
+  fill: var(--muted) !important;
+}
+[data-theme="light"] .recharts-legend-item-text {
+  color: var(--muted) !important;
+}
+

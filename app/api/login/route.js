@@ -11,9 +11,11 @@ export async function POST(request) {
     path: "/",
   };
 
+  const sv = process.env.SESSION_VERSION || "1";
+
   if (password === process.env.EDIT_PASSWORD) {
     const res = NextResponse.json({ ok: true });
-    res.cookies.set("auth", "admin", cookieOpts);
+    res.cookies.set("auth", `admin:${sv}`, cookieOpts);
     return res;
   }
 
@@ -21,7 +23,7 @@ export async function POST(request) {
   const client = clients.find(c => c.password === password);
   if (client) {
     const res = NextResponse.json({ ok: true });
-    res.cookies.set("auth", `client:${client.slug}`, cookieOpts);
+    res.cookies.set("auth", `client:${client.slug}:${sv}`, cookieOpts);
     return res;
   }
 
